@@ -44,7 +44,7 @@ IHost host = Host.CreateDefaultBuilder(args)
 
 
 var coreSeeder = host.Services.GetService<ISeeder>();
-//coreSeeder.Seed();
+coreSeeder.Seed();
    
     
 

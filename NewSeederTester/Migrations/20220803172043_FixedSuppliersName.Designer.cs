@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NewSeederTester.Data;
 
@@ -11,9 +12,10 @@ using NewSeederTester.Data;
 namespace NewSeederTester.Migrations
 {
     [DbContext(typeof(ContextToSeed))]
-    partial class ContextToSeedModelSnapshot : ModelSnapshot
+    [Migration("20220803172043_FixedSuppliersName")]
+    partial class FixedSuppliersName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

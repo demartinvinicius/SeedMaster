@@ -23,5 +23,6 @@ public class ContextToSeed : DbContext
 
     public DbSet<Product> Products { get; set; }
     public DbSet<OrderItems> OrdersItems { get; set; }  
+    public DbSet<Supplier> Suppliers { get; set; }    
    
 }

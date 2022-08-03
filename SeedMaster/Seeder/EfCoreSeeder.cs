@@ -27,6 +27,11 @@ namespace Nudes.SeedMaster.Seeder
         private readonly List<string> alreadyPopulated;
         private readonly DbContext context;
 
+        /// <summary>
+        /// Try to find a seed for a entityType and invokes it's seed method to populate the entity.
+        /// </summary>
+        /// <param name="entityType">The entity to populate</param>
+        /// <returns>true when the method is successful</returns>
         private bool InvokeSeed(IEntityType entityType)
         {
             var specificSeederInterface = seedTypes.Where(x => x.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).FirstOrDefault();
@@ -49,17 +54,14 @@ namespace Nudes.SeedMaster.Seeder
         ///
         public EfCoreSeeder(IEnumerable<DbContext> contexts, Assembly assembly, ILogger<EfCoreSeeder> logger, ILoggerFactory loggerFactory)
         {
-            int avoidloop;
             alreadyPopulated = new List<string>();
             entitiesQueue = new Queue<IEntityType>();
             this.contexts = contexts;
             this.logger = logger;
             this.assembly = assembly;
             this.loggerFactory = loggerFactory;
-            logger?.LogInformation("Starting Scanning Contexts");
-            this.context = contexts.FirstOrDefault();
 
-            var context = contexts.FirstOrDefault();
+            this.context = contexts.FirstOrDefault();
 
             seedTypes = from type in assembly.GetExportedTypes()
                         where !type.IsAbstract && !type.IsGenericTypeDefinition
@@ -68,14 +70,63 @@ namespace Nudes.SeedMaster.Seeder
                         let matchingInterface = genericInterfaces.FirstOrDefault()
                         where matchingInterface != null
                         select matchingInterface;
+        }
 
-            entities = context.Model.GetEntityTypes().ToList();
+        public virtual async Task Clean()
+        {
+            //#region Droping
+
+            //logger?.LogInformation("Cleaning started");
+
+            //foreach (var db in contexts)
+            //    await CleanDb(db);
+
+            //logger?.LogInformation("Cleaning ended");
+
+            //#endregion
+        }
+
+        protected virtual async Task CleanDb(DbContext db)
+        {
+            //logger?.LogInformation("Cleaning context {db}", db);
+
+            //foreach (var type in db.Model.GetEntityTypes())
+            //    await CleanEntity(db, type);
+        }
+
+        protected virtual async Task CleanEntity(DbContext db, IEntityType type)
+        {
+            //logger?.LogInformation("Cleaning entity {typeName}", type.Name);
+            //if (type.ClrType == typeof(Dictionary<string, object>))
+            //{
+            //    logger?.LogWarning("type {typeName} is a many to many, skipping", type.Name);
+            //    return;
+            //}
+
+            //if (type.IsOwned())
+            //{
+            //    logger?.LogWarning("type {typeName} is owned, skipping", type.Name);
+            //    return;
+            //}
+
+            //var boxedDbSet = db.GetType().GetMethods()
+            //                             .Where(d => d.Name == "Set")
+            //                             .FirstOrDefault(d => d.IsGenericMethod)
+            //                             .MakeGenericMethod(type.ClrType).Invoke(db, null);
+
+            //var dbSet = boxedDbSet as IQueryable<object>;
+            //db.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
+        }
+
+        
+        public virtual async Task Seed()
+        {
+            var entities = context.Model.GetEntityTypes().ToList();
             foreach (var entity in entities)
             {
                 entitiesQueue.Enqueue(entity);
             }
-
-            avoidloop = entitiesQueue.Count;
+            int avoidloop = entitiesQueue.Count;
 
             while (entitiesQueue.Count() > 0 && avoidloop > 0)
             {
@@ -136,69 +187,12 @@ namespace Nudes.SeedMaster.Seeder
             {
                 logger?.LogWarning("The entities queue is not empty. Failed to populate all entities");
             }
-        }
+            else
+            {
+                logger?.LogInformation("Seed finalized");
+            }
 
-        public virtual async Task Clean()
-        {
-            //#region Droping
-
-            //logger?.LogInformation("Cleaning started");
-
-            //foreach (var db in contexts)
-            //    await CleanDb(db);
-
-            //logger?.LogInformation("Cleaning ended");
-
-            //#endregion
-        }
-
-        protected virtual async Task CleanDb(DbContext db)
-        {
-            //logger?.LogInformation("Cleaning context {db}", db);
-
-            //foreach (var type in db.Model.GetEntityTypes())
-            //    await CleanEntity(db, type);
-        }
-
-        protected virtual async Task CleanEntity(DbContext db, IEntityType type)
-        {
-            //logger?.LogInformation("Cleaning entity {typeName}", type.Name);
-            //if (type.ClrType == typeof(Dictionary<string, object>))
-            //{
-            //    logger?.LogWarning("type {typeName} is a many to many, skipping", type.Name);
-            //    return;
-            //}
-
-            //if (type.IsOwned())
-            //{
-            //    logger?.LogWarning("type {typeName} is owned, skipping", type.Name);
-            //    return;
-            //}
-
-            //var boxedDbSet = db.GetType().GetMethods()
-            //                             .Where(d => d.Name == "Set")
-            //                             .FirstOrDefault(d => d.IsGenericMethod)
-            //                             .MakeGenericMethod(type.ClrType).Invoke(db, null);
-
-            //var dbSet = boxedDbSet as IQueryable<object>;
-            //db.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
-        }
-
-        public virtual async Task Seed()
-        {
-            //logger?.LogInformation("Starting seed");
-
-            //foreach (var db in contexts)
-            //{
-            //    var dbseeds = seeds.Where(d => d.GetType().GetTypeInfo().ImplementedInterfaces.Any(f => f.IsGenericType && f.GetGenericTypeDefinition() == typeof(ISeed<>) && f.GenericTypeArguments.Any(g => g == db.GetType())));
-            //    foreach (var seed in dbseeds)
-            //    {
-            //        logger?.LogInformation("seeding {seed} into {db}", seed, db);
-            //        await seed.Seed(db);
-            //    }
-            //}
-
-            //logger?.LogInformation("Seed finalized");
+            
         }
 
         public virtual async Task Commit()

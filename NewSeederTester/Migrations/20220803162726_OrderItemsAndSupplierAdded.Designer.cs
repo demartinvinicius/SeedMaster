@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NewSeederTester.Data;
 
@@ -11,9 +12,10 @@ using NewSeederTester.Data;
 namespace NewSeederTester.Migrations
 {
     [DbContext(typeof(ContextToSeed))]
-    partial class ContextToSeedModelSnapshot : ModelSnapshot
+    [Migration("20220803162726_OrderItemsAndSupplierAdded")]
+    partial class OrderItemsAndSupplierAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,12 +99,12 @@ namespace NewSeederTester.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("SupplierId")
+                    b.Property<Guid>("SuplierId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SupplierId");
+                    b.HasIndex("SuplierId");
 
                     b.ToTable("Products");
                 });
@@ -123,7 +125,7 @@ namespace NewSeederTester.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Suppliers");
+                    b.ToTable("Supliers");
                 });
 
             modelBuilder.Entity("NewSeederTester.Data.Domain.Order", b =>
@@ -158,13 +160,13 @@ namespace NewSeederTester.Migrations
 
             modelBuilder.Entity("NewSeederTester.Data.Domain.Product", b =>
                 {
-                    b.HasOne("NewSeederTester.Data.Domain.Supplier", "Supplier")
+                    b.HasOne("NewSeederTester.Data.Domain.Supplier", "Suplier")
                         .WithMany("Products")
-                        .HasForeignKey("SupplierId")
+                        .HasForeignKey("SuplierId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Supplier");
+                    b.Navigation("Suplier");
                 });
 
             modelBuilder.Entity("NewSeederTester.Data.Domain.Order", b =>
