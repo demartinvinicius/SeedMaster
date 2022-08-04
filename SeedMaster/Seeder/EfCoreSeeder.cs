@@ -84,16 +84,17 @@ namespace Nudes.SeedMaster.Seeder
 
         public virtual async Task Clean()
         {
-            //#region Droping
+            var rootentities = context.Model.GetEntityTypes().Where(x => x.GetForeignKeys().Count() == 0);
+            foreach (var entity in rootentities)
+            {
+                var recordstodelete = context.GetType().GetMethods()
+                             .Where(d => d.Name == "Set")
+                             .FirstOrDefault(d => d.IsGenericMethod)
+                             .MakeGenericMethod(entity.ClrType).Invoke(context, null);
 
-            //logger?.LogInformation("Cleaning started");
-
-            //foreach (var db in contexts)
-            //    await CleanDb(db);
-
-            //logger?.LogInformation("Cleaning ended");
-
-            //#endregion
+                var dbSet = recordstodelete as IQueryable<object>;
+                context.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
+            }
         }
 
         protected virtual async Task CleanDb(DbContext db)
@@ -131,6 +132,9 @@ namespace Nudes.SeedMaster.Seeder
         
         public virtual async Task Seed()
         {
+            Clean().Wait();
+            context.SaveChangesAsync().Wait();
+
             var entities = context.Model.GetEntityTypes().ToList();
             foreach (var entity in entities)
             {
