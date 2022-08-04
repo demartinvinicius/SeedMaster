@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using Nudes.SeedMaster.Interfaces;
+using Nudes.SeedMaster.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,10 +133,10 @@ namespace Nudes.SeedMaster.Seeder
         
         public virtual async Task Seed()
         {
-            Clean().Wait();
-            context.SaveChangesAsync().Wait();
+            //Clean().Wait();
+            //context.SaveChangesAsync().Wait();
 
-            var entities = context.Model.GetEntityTypes().ToList();
+            var entities = context.Model.GetEntityTypes().Where(x => x.GetType().GetCustomAttribute<EnableSeederAttribute>() != null);
             foreach (var entity in entities)
             {
                 entitiesQueue.Enqueue(entity);
