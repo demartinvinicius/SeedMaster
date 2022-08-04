@@ -13,9 +13,10 @@ namespace NewSeederTester.Data.Seeders;
 
 public class ProductSeeder : INewSeeder<Product,ContextToSeed>
 {
-    public bool Seed(ContextToSeed context, ILogger logger)
+    public List<Product> Seed(ContextToSeed context, ILogger logger)
     {
         logger.LogInformation("Populating data to product");
+        List<Product> products1 = new List<Product>();
 
         foreach(var supplier in context.Suppliers)
         {
@@ -25,12 +26,9 @@ public class ProductSeeder : INewSeeder<Product,ContextToSeed>
                 .RuleFor(o => o.Price, f => f.Random.Double(100, 200))
                 .Generate(3);
 
-            context.AddRange(products);
+            products1.AddRange(products);
         }
-
-
-
-        context.SaveChangesAsync().Wait();
-        return true;
+        context.AddRange(products1);
+        return products1;
     }
 }

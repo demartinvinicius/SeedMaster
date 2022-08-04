@@ -16,5 +16,5 @@ namespace Nudes.SeedMaster.Interfaces;
 /// <typeparam name="TDbSet">DbSet Type</typeparam>
 public interface INewSeeder<TDbSet,TContext> where TContext : DbContext
 { 
-    public abstract bool Seed(TContext context,ILogger logger);
+    public abstract List<TDbSet> Seed(TContext context,ILogger logger);
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NewSeederTester.Data;
 
@@ -11,9 +12,10 @@ using NewSeederTester.Data;
 namespace NewSeederTester.Migrations
 {
     [DbContext(typeof(ContextToSeed))]
-    partial class ContextToSeedModelSnapshot : ModelSnapshot
+    [Migration("20220803190839_InsertedQtyFieldOnOrderItems")]
+    partial class InsertedQtyFieldOnOrderItems
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,6 +36,9 @@ namespace NewSeederTester.Migrations
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<double>("TotalPrice")
+                        .HasColumnType("float");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PersonId");
@@ -52,9 +57,6 @@ namespace NewSeederTester.Migrations
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<long>("Qty")
-                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 

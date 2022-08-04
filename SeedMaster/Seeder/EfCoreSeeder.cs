@@ -44,7 +44,17 @@ namespace Nudes.SeedMaster.Seeder
 
             var logger1 = loggerFactory.CreateLogger(specificSeederClass.Name);
             var specificSeeder = Activator.CreateInstance(specificSeederClass);
-            return (bool)specificSeederClass.GetMethod("Seed").Invoke(specificSeeder, new object[] { context, logger1 });
+
+            var result = specificSeederClass.GetMethod("Seed").Invoke(specificSeeder, new object[] { context, logger1 });
+
+
+            
+            if (result == null)
+                return false;
+
+            //context.AddRange(result);
+            context.SaveChangesAsync().Wait();
+            return true;
         }
 
         /// <summary>
