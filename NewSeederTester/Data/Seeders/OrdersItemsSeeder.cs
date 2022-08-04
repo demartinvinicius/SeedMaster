@@ -16,9 +16,13 @@ public class OrdersItemsSeeder : INewSeeder<OrderItems, ContextToSeed>
     {
         List<OrderItems> orderItems = new List<OrderItems>();
         logger.LogInformation("Order items populated");
-        foreach(var order in context.Orders.ToList())
+        
+        var orders = context.Orders.ToList();
+        var products = context.Products.ToList();
+
+        foreach(var order in orders)
         {
-            foreach(var product in context.Products.ToList())
+            foreach(var product in products)
             {
                 var numitems = new Faker().Random.Int(1, 4);
                 var orderi = new Faker<OrderItems>("pt_BR")
