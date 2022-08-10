@@ -19,6 +19,7 @@ public class ContextToSeed : DbContext
     {
 
     }
+
     [EnableSeeder]
     public DbSet<Person> People { get; set; }
 
@@ -27,10 +28,10 @@ public class ContextToSeed : DbContext
 
     [EnableSeeder]
     public DbSet<Product> Products { get; set; }
-    
+
     [EnableSeeder]
-    public DbSet<OrderItems> OrdersItems { get; set; }  
-    
+    public DbSet<OrderItems> OrdersItems { get; set; }
+
     [EnableSeeder]
     public DbSet<Supplier> Suppliers { get; set; }    
    

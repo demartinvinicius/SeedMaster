@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
-using Nudes.SeedMaster.Interfaces;
 using Nudes.SeedMaster.Attributes;
+using Nudes.SeedMaster.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +25,7 @@ namespace Nudes.SeedMaster.Seeder
         private readonly Assembly assembly;
         private readonly IEnumerable<IEntityType> entities;
         private readonly Queue<IEntityType> entitiesQueue;
-        private readonly List<string> alreadyPopulated;
+        
         private readonly DbContext context;
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Nudes.SeedMaster.Seeder
         /// </summary>
         /// <param name="entityType">The entity to populate</param>
         /// <returns>true when the method is successful</returns>
-        private bool InvokeSeed(IEntityType entityType)
+        private async Task<bool> InvokeSeedAsync(IEntityType entityType)
         {
             var specificSeederInterface = seedTypes.Where(x => x.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).FirstOrDefault();
             if (specificSeederInterface == null)
@@ -46,15 +46,12 @@ namespace Nudes.SeedMaster.Seeder
             var logger1 = loggerFactory.CreateLogger(specificSeederClass.Name);
             var specificSeeder = Activator.CreateInstance(specificSeederClass);
 
-            var result = specificSeederClass.GetMethod("Seed").Invoke(specificSeeder, new object[] { context, logger1 });
+            bool result = (bool) specificSeederClass.GetMethod("Seed").Invoke(specificSeeder, new object[] { context, logger1 });
 
-
-            
-            if (result == null)
+            if (!result)
                 return false;
 
-            //context.AddRange(result);
-            context.SaveChangesAsync().Wait();
+            await context.SaveChangesAsync();
             return true;
         }
 
@@ -65,7 +62,7 @@ namespace Nudes.SeedMaster.Seeder
         ///
         public EfCoreSeeder(IEnumerable<DbContext> contexts, Assembly assembly, ILogger<EfCoreSeeder> logger, ILoggerFactory loggerFactory)
         {
-            alreadyPopulated = new List<string>();
+            
             entitiesQueue = new Queue<IEntityType>();
             this.contexts = contexts;
             this.logger = logger;
@@ -129,72 +126,39 @@ namespace Nudes.SeedMaster.Seeder
             //var dbSet = boxedDbSet as IQueryable<object>;
             //db.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
         }
-
-        
         public virtual async Task Seed()
         {
-            //Clean().Wait();
-            //context.SaveChangesAsync().Wait();
-
-            var entities = context.Model.GetEntityTypes().Where(x => x.GetType().GetCustomAttribute<EnableSeederAttribute>() != null);
-            foreach (var entity in entities)
-            {
-                entitiesQueue.Enqueue(entity);
-            }
+            FillQueue();
+            
             int avoidloop = entitiesQueue.Count;
 
             while (entitiesQueue.Count() > 0 && avoidloop > 0)
             {
                 var entityType = entitiesQueue.Peek();
+                EntityHasData(entityType);
 
-                if (entityType.GetForeignKeys().Count() == 0) // Root Entity
+                if ((entityType.GetForeignKeys().Count() == 0) ||
+                    (entityType.GetForeignKeys().All(x => EntityHasData(x.PrincipalEntityType))))
                 {
-                    logger?.LogInformation($"Found Root Entity => {entityType.Name}");
+                    logger?.LogInformation($"Populating entity => {entityType.ClrType.Name}");
 
-                    if (!InvokeSeed(entityType))
+                    if (!await InvokeSeedAsync(entityType))
                     {
-                        logger?.LogWarning($"Failed to seed {entityType.ClrType.Name}");
-                        entitiesQueue.Dequeue();
-                        entitiesQueue.Enqueue(entityType);
-                        avoidloop--;
-                        continue;
+                        logger?.LogWarning($"Failed to seed => {entityType.ClrType.Name}");
+                        break;
                     }
                     else
                     {
                         logger?.LogInformation($"Entity {entityType.ClrType.Name} populated.");
-                        alreadyPopulated.Add(entityType.ClrType.Name);
                         entitiesQueue.Dequeue();
                         avoidloop = entitiesQueue.Count();
                     }
                 }
                 else
                 {
-                    var teste = entityType.GetForeignKeys().ToList();
-
-                    if (!entityType.GetForeignKeys().All(x => alreadyPopulated.Contains(x.PrincipalEntityType.ClrType.Name)))
-                    {
-                        logger.LogInformation(String.Join(" ", entityType.GetForeignKeys().Select(a => a.PrincipalEntityType)));
-                        entitiesQueue.Dequeue();
-                        entitiesQueue.Enqueue(entityType);
-                    }
-                    else
-                    {
-                        if (!InvokeSeed(entityType))
-                        {
-                            logger?.LogWarning($"Failed to seed {entityType.ClrType.Name}");
-                            entitiesQueue.Dequeue();
-                            entitiesQueue.Enqueue(entityType);
-                            avoidloop--;
-                            continue;
-                        }
-                        else
-                        {
-                            logger?.LogInformation($"Entity {entityType.ClrType.Name} populated.");
-                            alreadyPopulated.Add(entityType.ClrType.Name);
-                            entitiesQueue.Dequeue();
-                            avoidloop = entitiesQueue.Count();
-                        }
-                    }
+                    logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
+                    entitiesQueue.Dequeue();
+                    entitiesQueue.Enqueue(entityType);
                 }
             }
 
@@ -206,8 +170,24 @@ namespace Nudes.SeedMaster.Seeder
             {
                 logger?.LogInformation("Seed finalized");
             }
+        }
 
-            
+        private bool EntityHasData(IEntityType entity)
+        {
+            MethodInfo methodinfo = context.GetType().GetMethods().Single(p => p.Name == nameof(DbContext.Set) && !p.GetParameters().Any());
+            var method = methodinfo.MakeGenericMethod(entity.ClrType).Invoke(context,null) as IEnumerable<object>;
+            if (method.Count() > 0)
+                return true;
+            return false;
+        }
+        private void FillQueue()
+        {
+            IEnumerable<string> atributes = context.GetType().GetProperties().Where(x => x.GetCustomAttribute<EnableSeederAttribute>() != null).Select(x => x.PropertyType.GenericTypeArguments.FirstOrDefault().Name);
+            var entities = context.Model.GetEntityTypes().Where(y => atributes.Any(x => x == y.ClrType.Name));
+            foreach (var entity in entities)
+            {
+                entitiesQueue.Enqueue(entity);
+            }
         }
 
         public virtual async Task Commit()

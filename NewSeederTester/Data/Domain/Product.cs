@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace NewSeederTester.Data.Domain;
 
+
 public class Product
 {
     public Guid Id { get; set; }   

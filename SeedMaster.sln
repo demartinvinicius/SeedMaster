@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SeedMaster", "SeedMaster\Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PocApi", "samples\PocApi\PocApi.csproj", "{F735E315-99FB-4F54-AFD1-A7A92A8EE3A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewSeederTester", "NewSeederTester\NewSeederTester.csproj", "{00944AD8-A4AC-4349-9CD2-A8B2BEEF99F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewSeederTester", "NewSeederTester\NewSeederTester.csproj", "{00944AD8-A4AC-4349-9CD2-A8B2BEEF99F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

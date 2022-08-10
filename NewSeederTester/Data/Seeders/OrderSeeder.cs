@@ -13,7 +13,7 @@ namespace NewSeederTester.Data.Seeders;
 
 public class OrderSeeder : INewSeeder<Order, ContextToSeed>
 {
-    public List<Order> Seed(ContextToSeed context, ILogger logger)
+    public bool Seed(ContextToSeed context, ILogger logger)
     {
         List<Order> orders = new List<Order>();
         logger.LogInformation("Populating Orders");
@@ -27,6 +27,6 @@ public class OrderSeeder : INewSeeder<Order, ContextToSeed>
 
         }
         context.AddRange(orders);
-        return orders;
+        return true;
     }
 }

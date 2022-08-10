@@ -13,7 +13,7 @@ namespace NewSeederTester.Data.Seeders;
 
 public class ProductSeeder : INewSeeder<Product,ContextToSeed>
 {
-    public List<Product> Seed(ContextToSeed context, ILogger logger)
+    public bool Seed(ContextToSeed context, ILogger logger)
     {
         logger.LogInformation("Populating data to product");
         List<Product> products1 = new List<Product>();
@@ -29,6 +29,6 @@ public class ProductSeeder : INewSeeder<Product,ContextToSeed>
             products1.AddRange(products);
         }
         context.AddRange(products1);
-        return products1;
+        return true;
     }
 }

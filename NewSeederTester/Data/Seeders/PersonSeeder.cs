@@ -14,7 +14,7 @@ namespace NewSeederTester.Data.Seeders;
 public class PersonSeeder : INewSeeder<NewSeederTester.Data.Domain.Person,ContextToSeed>
 {
 
-    public List<NewSeederTester.Data.Domain.Person> Seed(ContextToSeed context, ILogger logger)
+    public bool Seed(ContextToSeed context, ILogger logger)
     {
         logger.LogInformation("Populating Person!");
         var people = new Faker<Domain.Person>("pt_BR")
@@ -22,7 +22,7 @@ public class PersonSeeder : INewSeeder<NewSeederTester.Data.Domain.Person,Contex
             .RuleFor(o => o.CPF, f => f.Person.Cpf(true))
             .Generate(30);
         context.AddRange(people);
-        
-        return people;
+
+        return true;
     }
 }

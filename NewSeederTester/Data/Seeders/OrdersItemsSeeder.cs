@@ -12,7 +12,7 @@ namespace NewSeederTester.Data.Seeders;
 
 public class OrdersItemsSeeder : INewSeeder<OrderItems, ContextToSeed>
 {
-    public List<OrderItems> Seed(ContextToSeed context, ILogger logger)
+    public bool Seed(ContextToSeed context, ILogger logger)
     {
         List<OrderItems> orderItems = new List<OrderItems>();
         logger.LogInformation("Order items populated");
@@ -34,6 +34,6 @@ public class OrdersItemsSeeder : INewSeeder<OrderItems, ContextToSeed>
             }
         }
         context.AddRange(orderItems);
-        return orderItems;
+        return true;
     }
 }
