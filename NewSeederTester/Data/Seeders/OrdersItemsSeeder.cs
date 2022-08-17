@@ -12,13 +12,12 @@ namespace NewSeederTester.Data.Seeders;
 
 public class OrdersItemsSeeder : INewSeeder<OrderItems, ContextToSeed>
 {
-    public bool Seed(ContextToSeed context, ILogger logger)
+    public void Seed(ContextToSeed context, ILogger logger)
     {
         List<OrderItems> orderItems = new List<OrderItems>();
-        logger.LogInformation("Order items populated");
-        
-        var orders = context.Orders.ToList();
-        var products = context.Products.ToList();
+                
+        var orders = context.Orders.Take(3).ToList();
+        var products = context.Products.Take(4).ToList();
 
         foreach(var order in orders)
         {
@@ -34,6 +33,6 @@ public class OrdersItemsSeeder : INewSeeder<OrderItems, ContextToSeed>
             }
         }
         context.AddRange(orderItems);
-        return true;
+        
     }
 }

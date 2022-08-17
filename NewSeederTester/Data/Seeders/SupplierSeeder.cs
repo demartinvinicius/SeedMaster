@@ -8,7 +8,7 @@ namespace NewSeederTester.Data.Seeders;
 
 public class SupplierSeeder : INewSeeder<Supplier, ContextToSeed>
 {
-    public bool Seed(ContextToSeed context, ILogger logger)
+    public void Seed(ContextToSeed context, ILogger logger)
     {
         logger.LogInformation("Populating Supplier");
 
@@ -20,6 +20,6 @@ public class SupplierSeeder : INewSeeder<Supplier, ContextToSeed>
 
 
         context.AddRange(suppliers);
-        return true;
+
     }
 }

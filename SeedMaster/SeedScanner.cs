@@ -1,88 +1,32 @@
-﻿using Nudes.SeedMaster.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Nudes.SeedMaster.Interfaces;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Nudes.SeedMaster
+namespace Nudes.SeedMaster;
+
+/// <summary>
+/// Class that can be used to find all the seeds from a collection of types.
+/// </summary>
+public partial class SeedScanner
 {
-    /// <summary>
-    /// Class that can be used to find all the seeds from a collection of types.
-    /// </summary>
-    public class SeedScanner : IEnumerable<SeedScanner.ScanResult>
+    public static IEnumerable<ScanResult> GetSeeds(Assembly assembly)
     {
-        readonly IEnumerable<Type> _types;
+        var exportedTypes = assembly.GetExportedTypes()
+            .Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition);
 
-        /// <summary>
-        /// Creates a scanner that works on a sequence of types.
-        /// </summary>
-        public SeedScanner(IEnumerable<Type> types)
-        {
-            _types = types;
-        }
-
-        /// <summary>
-        /// Finds all the seeds in the specified assembly.
-        /// </summary>
-        public static SeedScanner FindSeedersInAssembly(Assembly assembly) => new(assembly.GetExportedTypes());
-
-        /// <summary>
-        /// Finds all the seeds in the specified assemblies
-        /// </summary>
-        public static SeedScanner FindSeedersInAssemblies(params Assembly[] assemblies) => new(assemblies.SelectMany(x => x.GetExportedTypes().Distinct()));
-
-        private IEnumerable<ScanResult> Execute()
-        {
-            var openGenericType = typeof(ISeed<>);
-
-            return from type in _types
-                        where !type.IsAbstract && !type.IsGenericTypeDefinition
-                        let interfaces = type.GetInterfaces()
-                        let genericInterfaces = interfaces.Where(i => i.GetTypeInfo().IsGenericType && i.GetGenericTypeDefinition() == openGenericType)
-                        let matchingInterface = genericInterfaces.FirstOrDefault()
-                        where matchingInterface != null
-                        select new ScanResult(typeof(ISeed), type);
-        }
-
-        /// <summary>
-        /// Performs the action to all of the scan results.
-        /// </summary>
-        public void ForEach(Action<ScanResult> action)
-        {
-            foreach (var result in this)
-            {
-                action(result);
-            }
-        }
-
-        public IEnumerator<ScanResult> GetEnumerator() => Execute().GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        /// <summary>
-        /// Result of performing a scan.
-        /// </summary>
-        public class ScanResult
-        {
-            /// <summary>
-            /// Creates an instance of an ScanResult.
-            /// </summary>
-            public ScanResult(Type interfaceType, Type implementationType)
-            {
-                InterfaceType = interfaceType;
-                ImplementationType = implementationType;
-            }
-
-            /// <summary>
-            /// Seed InterfaceType, it should be ISeed if nothing is changed
-            /// </summary>
-            public Type InterfaceType { get; private set; }
-
-            /// <summary>
-            /// Concrete type that implements the ISeed Type.
-            /// </summary>
-            public Type ImplementationType { get; private set; }
-        }
+        return exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
+            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(INewSeeder<,>))
+            .Select(inter => 
+                   new ScanResult(inter, exportedTypes
+                         .Where(implemation => inter.IsAssignableFrom(implemation)).Single()));
     }
+
+
+   
+ 
+
 }

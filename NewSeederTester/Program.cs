@@ -7,9 +7,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NewSeederTester.Data;
 using NLog.Extensions.Logging;
+using Nudes.SeedMaster;
 using Nudes.SeedMaster.Interfaces;
 using Nudes.SeedMaster.Seeder;
 using System.Reflection;
+using static Nudes.SeedMaster.SeedScanner;
 
 IConfiguration myconfig = null;
 ILoggerFactory loggerFactory = LoggerFactory.Create(x =>
@@ -34,10 +36,10 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddDbContext<ContextToSeed>(config =>
         config.UseSqlServer(myconfig.GetConnectionString("MainConnection")));
         services.AddScoped<DbContext>(provider => provider.GetService<ContextToSeed>());
-        services.AddScoped<Assembly>(provider => Assembly.GetExecutingAssembly());
+        services.AddScoped<IEnumerable<ScanResult>>(provider => SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()));
         
         services.AddScoped<ISeeder,EfCoreSeeder>();
-
+        
 
     }).Build();
 
