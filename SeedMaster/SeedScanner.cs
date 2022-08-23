@@ -19,7 +19,7 @@ public partial class SeedScanner
             .Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition);
 
         return exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
-            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(INewSeeder<,>))
+            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,>))
             .Select(inter => 
                    new ScanResult(inter, exportedTypes
                          .Where(implemation => inter.IsAssignableFrom(implemation)).Single()));

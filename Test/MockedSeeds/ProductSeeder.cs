@@ -1,13 +1,14 @@
 ﻿using Bogus;
 using Microsoft.Extensions.Logging;
-using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Interfaces;
+using Test.MockedContext;
+using Test.MockedDomain;
 
-namespace NewSeederTester.Data.Seeders;
+namespace Test.MockedSeeds;
 
-public class ProductSeeder : IActualSeeder<Product, ContextToSeed>
+public class ProductSeeder : IActualSeeder<Product, TestContext>
 {
-    public void Seed(ContextToSeed context, ILogger logger)
+    public void Seed(TestContext context, ILogger logger)
     {
         logger.LogInformation("Populating data to product");
         List<Product> products1 = new List<Product>();

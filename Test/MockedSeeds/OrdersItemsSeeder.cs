@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -7,12 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Bogus;
+using Test.MockedDomain;
+using Test.MockedContext;
 
-namespace NewSeederTester.Data.Seeders;
+namespace Test.MockedSeeds;
 
-public class OrdersItemsSeeder : IActualSeeder<OrderItems, ContextToSeed>
+public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
 {
-    public void Seed(ContextToSeed context, ILogger logger)
+    public void Seed(TestContext context, ILogger logger)
     {
         List<OrderItems> orderItems = new List<OrderItems>();
                 

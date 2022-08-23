@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -8,16 +7,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Bogus;
 using Bogus.Extensions.Brazil;
+using Test.MockedContext;
 
-namespace NewSeederTester.Data.Seeders;
+namespace Test.MockedSeeds;
 
-public class PersonSeeder : IActualSeeder<NewSeederTester.Data.Domain.Person,ContextToSeed>
+public class PersonSeeder : IActualSeeder<MockedDomain.Person,TestContext>
 {
 
-    public void Seed(ContextToSeed context, ILogger logger)
+    public void Seed(TestContext context, ILogger logger)
     {
         logger.LogInformation("Populating Person!");
-        var people = new Faker<Domain.Person>("pt_BR")
+        var people = new Faker<MockedDomain.Person>("pt_BR")
             .RuleFor(o => o.Name, f => f.Person.FullName)
             .RuleFor(o => o.CPF, f => f.Person.Cpf(true))
             .Generate(30);

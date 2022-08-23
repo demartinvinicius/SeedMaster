@@ -1,14 +1,15 @@
 ﻿using Bogus;
 using Bogus.Extensions.Brazil;
 using Microsoft.Extensions.Logging;
-using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Interfaces;
+using Test.MockedContext;
+using Test.MockedDomain;
 
-namespace NewSeederTester.Data.Seeders;
+namespace Test.MockedSeeds;
 
-public class SupplierSeeder : IActualSeeder<Supplier, ContextToSeed>
+public class SupplierSeeder : IActualSeeder<Supplier, TestContext>
 {
-    public void Seed(ContextToSeed context, ILogger logger)
+    public void Seed(TestContext context, ILogger logger)
     {
         logger.LogInformation("Populating Supplier");
 

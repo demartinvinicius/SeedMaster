@@ -26,8 +26,8 @@ builder.Services.AddScoped<DbContext>(provider => provider.GetService<Sample2DbC
 builder.Services.AddScoped<DbContext>(provider => provider.GetService<TestDbContext>());
 
 // Scanning our assembly and adding all ISeed
-SeedScanner.FindSeedersInAssembly(Assembly.GetExecutingAssembly())
-    .ForEach(d => builder.Services.AddScoped(d.InterfaceType, d.ImplementationType));
+builder.Services.AddScoped(SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()));
+ForEach(d => builder.Services.AddScoped(d.InterfaceType, d.ImplementationType));
 
 // Adding our EfCoreSeeder service
 builder.Services.AddScoped<ISeeder, EfCoreSeeder>();

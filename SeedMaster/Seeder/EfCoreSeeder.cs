@@ -1,12 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
-using Nudes.SeedMaster.Attributes;
 using Nudes.SeedMaster.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using static Nudes.SeedMaster.SeedScanner;
 
@@ -22,7 +20,8 @@ namespace Nudes.SeedMaster.Seeder
         private readonly IEnumerable<ScanResult> seeders;
         private readonly ILogger<EfCoreSeeder> logger;
         private readonly ILoggerFactory loggerFactory;
-        private readonly Queue<IEntityType> entitiesQueue;
+        private readonly Queue<IEntityType> seedableQueue;
+        private readonly Queue<IEntityType> cleanableQueue;
         private readonly List<string> entitiesAlreadySeeded;
 
         private readonly DbContext context;
@@ -47,47 +46,68 @@ namespace Nudes.SeedMaster.Seeder
                 throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
             }
             seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
-
         }
 
         public EfCoreSeeder(IEnumerable<DbContext> contexts, IEnumerable<ScanResult> seedTypes, ILogger<EfCoreSeeder> logger, ILoggerFactory loggerFactory)
         {
-            entitiesQueue = new Queue<IEntityType>();
+            seedableQueue = new Queue<IEntityType>();
+            cleanableQueue = new Queue<IEntityType>();
             entitiesAlreadySeeded = new List<string>();
             this.contexts = contexts;
             this.logger = logger;
             this.loggerFactory = loggerFactory;
             this.context = contexts.FirstOrDefault();
             this.seeders = seedTypes;
-            FillQueue();
+            EfCoreHelpers.FillSeedableQueue(context, seedableQueue);
+            EfCoreHelpers.FillCleanableEntitiesQueue(context, cleanableQueue);
         }
 
         public virtual async Task Clean()
         {
-            var rootentities = entitiesQueue.ToList()
-                .Where(x => x.GetForeignKeys().Count() == 0);
-
-            
-            foreach (var entity in rootentities)
+            int avoidloop = cleanableQueue.Count();
+            while (cleanableQueue.Count > 0 && avoidloop > 0)
             {
-                var recordstodelete = context.GetType().GetMethods()
-                             .Where(d => d.Name == "Set")
-                             .FirstOrDefault(d => d.IsGenericMethod)
-                             .MakeGenericMethod(entity.ClrType).Invoke(context, null);
-
-                var dbSet = recordstodelete as IQueryable<object>;
-                context.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
+                var entityType = cleanableQueue.Peek();
+                if ((entityType.GetNavigations().Where(a => a.IsCollection).Count() == 0) ||
+                    (entityType.GetNavigations().Where(a => a.IsCollection).Select(a => a.TargetEntityType)
+                    .All(x => !EfCoreHelpers.EntityHasData(context, x))))
+                {
+                    logger?.LogInformation($"Cleaning data from entity => {entityType.ClrType.Name}");
+                    try
+                    {
+                        var recordstodelete = context.GetType().GetMethods()
+                            .Where(d => d.Name == "Set")
+                            .FirstOrDefault(d => d.IsGenericMethod)
+                            .MakeGenericMethod(entityType.ClrType).Invoke(context, null);
+                        var dbSet = recordstodelete as IQueryable<object>;
+                        context.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
+                        await context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogWarning($"Error on populate {Environment.NewLine}{ex.Message}");
+                    }
+                    cleanableQueue.Dequeue();
+                    avoidloop = cleanableQueue.Count();
+                }
+                else
+                {
+                    logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
+                    cleanableQueue.Dequeue();
+                    cleanableQueue.Enqueue(entityType);
+                    avoidloop--;
+                }
             }
         }
+
         public virtual async Task Seed()
         {
-            
-            int avoidloop = entitiesQueue.Count;
+            int avoidloop = seedableQueue.Count;
 
-            while (entitiesQueue.Count > 0 && avoidloop > 0)
+            while (seedableQueue.Count > 0 && avoidloop > 0)
             {
-                var entityType = entitiesQueue.Peek();
- 
+                var entityType = seedableQueue.Peek();
+
                 if ((entityType.GetForeignKeys().Count() == 0) ||
                     (entityType.GetForeignKeys().All(x => EntityAlreadySeedOrHasData(x.PrincipalEntityType))))
                 {
@@ -101,18 +121,19 @@ namespace Nudes.SeedMaster.Seeder
                     {
                         logger?.LogWarning($"Error on populate {Environment.NewLine} {ex.Message}");
                     }
-                    entitiesQueue.Dequeue();
-                    avoidloop = entitiesQueue.Count();
+                    seedableQueue.Dequeue();
+                    avoidloop = seedableQueue.Count();
                 }
                 else
                 {
                     logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
-                    entitiesQueue.Dequeue();
-                    entitiesQueue.Enqueue(entityType);
+                    seedableQueue.Dequeue();
+                    seedableQueue.Enqueue(entityType);
+                    avoidloop--;
                 }
             }
 
-            if (entitiesQueue.Count() > 0)
+            if (seedableQueue.Count() > 0)
             {
                 logger?.LogWarning("The entities queue is not empty. Failed to populate all entities");
             }
@@ -121,29 +142,12 @@ namespace Nudes.SeedMaster.Seeder
                 logger?.LogInformation("Seed finalized");
             }
         }
+
         private bool EntityAlreadySeedOrHasData(IEntityType entity)
         {
             if (entitiesAlreadySeeded.Contains(entity.ClrType.Name))
                 return true;
-            return EntityHasData(entity);
-        }
-
-        private bool EntityHasData(IEntityType entity)
-        {
-            MethodInfo methodinfo = context.GetType().GetMethods().Single(p => p.Name == nameof(DbContext.Set) && !p.GetParameters().Any());
-            var method = methodinfo.MakeGenericMethod(entity.ClrType).Invoke(context, null) as IEnumerable<object>;
-            if (method.Any())
-                return true;
-            return false;
-        }
-        private void FillQueue()
-        {
-            IEnumerable<string> atributes = context.GetType().GetProperties().Where(x => x.GetCustomAttribute<EnableSeederAttribute>() != null).Select(x => x.PropertyType.GenericTypeArguments.FirstOrDefault().Name);
-            var entities = context.Model.GetEntityTypes().Where(y => atributes.Any(x => x == y.ClrType.Name));
-            foreach (var entity in entities)
-            {
-                entitiesQueue.Enqueue(entity);
-            }
+            return EfCoreHelpers.EntityHasData(context, entity);
         }
 
         public virtual async Task Commit()
@@ -170,7 +174,6 @@ namespace Nudes.SeedMaster.Seeder
 
         public void Dispose()
         {
-            
         }
     }
 }

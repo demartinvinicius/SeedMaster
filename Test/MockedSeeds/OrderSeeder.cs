@@ -1,19 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
-using NewSeederTester.Data.Domain;
+
 using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Bogus;
 using Bogus.Extensions.Brazil;
+using Test.MockedDomain;
+using Test.MockedContext;
 
-namespace NewSeederTester.Data.Seeders;
+namespace Test.MockedSeeds;
 
-public class OrderSeeder : IActualSeeder<Order, ContextToSeed>
+public class OrderSeeder : IActualSeeder<Order, TestContext>
 {
-    public void Seed(ContextToSeed context, ILogger logger)
+    public void Seed(TestContext context, ILogger logger)
     {
         List<Order> orders = new List<Order>();
         logger.LogInformation("Populating Orders");
