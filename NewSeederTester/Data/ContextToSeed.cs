@@ -8,11 +8,10 @@ public class ContextToSeed : DbContext
 {
     public ContextToSeed()
     {
-
     }
+
     public ContextToSeed(DbContextOptions<ContextToSeed> options) : base(options)
     {
-
     }
 
     [EnableSeeder]
@@ -29,5 +28,4 @@ public class ContextToSeed : DbContext
 
     [EnableSeeder]
     public DbSet<Supplier> Suppliers { get; set; }
-
 }

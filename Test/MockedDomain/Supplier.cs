@@ -1,7 +1,5 @@
 ﻿namespace Test.MockedDomain;
 
-
-
 public class Supplier
 {
     public Guid Id { get; set; }

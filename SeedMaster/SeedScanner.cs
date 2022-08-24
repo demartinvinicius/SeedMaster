@@ -21,9 +21,4 @@ public partial class SeedScanner
                    new ScanResult(inter, exportedTypes
                          .Where(implemation => inter.IsAssignableFrom(implemation)).Single()));
     }
-
-
-
-
-
 }

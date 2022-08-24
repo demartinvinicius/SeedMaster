@@ -1,6 +1,5 @@
 ﻿namespace Test.MockedDomain;
 
-
 public class Product
 {
     public Guid Id { get; set; }

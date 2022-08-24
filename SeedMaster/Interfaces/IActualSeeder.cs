@@ -5,7 +5,7 @@ namespace Nudes.SeedMaster.Interfaces;
 
 /// <summary>
 /// Interface seeder class
-/// 
+///
 /// </summary>
 /// <typeparam name="TContext">Context Type</typeparam>
 /// <typeparam name="TDbSet">DbSet Type</typeparam>

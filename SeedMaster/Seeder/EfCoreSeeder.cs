@@ -84,7 +84,7 @@ namespace Nudes.SeedMaster.Seeder
                     }
                     catch (Exception ex)
                     {
-                        logger?.LogWarning($"Error on populate {Environment.NewLine}{ex.Message}");
+                        logger?.LogWarning($"Error on delete {Environment.NewLine}{ex.Message}");
                     }
                     cleanableQueue.Dequeue();
                     avoidloop = cleanableQueue.Count();
@@ -103,7 +103,7 @@ namespace Nudes.SeedMaster.Seeder
         {
             int avoidloop = seedableQueue.Count;
 
-            while (seedableQueue.Count > 0 && avoidloop > 0)
+            while (seedableQueue.Count > 0 && avoidloop >= 0)
             {
                 var entityType = seedableQueue.Peek();
 

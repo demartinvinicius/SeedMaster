@@ -13,10 +13,12 @@ public class EfCoreHelpers
     {
         ActualFillQueue(context, queue, true);
     }
+
     public static void FillSeedableQueue(DbContext context, Queue<IEntityType> queue)
     {
         ActualFillQueue(context, queue, false);
     }
+
     private static void ActualFillQueue(DbContext context, Queue<IEntityType> queue, bool useCleanAttribute)
     {
         IEnumerable<string> atributes = context.GetType().GetProperties().Where(x => x.GetCustomAttribute<EnableSeederAttribute>() != null &&
@@ -36,5 +38,4 @@ public class EfCoreHelpers
             return true;
         return false;
     }
-
 }

@@ -12,11 +12,11 @@ public class SeederFixture
     public ILoggerFactory LoggerF { get; private set; }
     public Faker Faker { get; private set; }
 
-    public TestContext TestContext { get; private set; }
+    public TestContext TestContextInstance { get; private set; }
+
     public SeederFixture()
     {
-        TestContext = new();
-
+        TestContextInstance = new();
         var target = new FileTarget()
         {
             FileName = @"C:\tmp\SeederLog.txt"
@@ -29,16 +29,12 @@ public class SeederFixture
             conf.AddNLog(config);
         });
 
-       
         Faker = new Faker();
         Faker.Random = new Randomizer(1);
     }
-
-
 }
 
 [CollectionDefinition("Seeder Collection")]
 public class SeederCollection : ICollectionFixture<SeederFixture>
 {
-
 }

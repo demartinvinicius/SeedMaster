@@ -29,4 +29,8 @@
     <ProjectReference Include="..\SeedMaster\SeedMaster.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Interceptors\" />
+  </ItemGroup>
+
 </Project>

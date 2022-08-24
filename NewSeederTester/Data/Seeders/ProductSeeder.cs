@@ -23,6 +23,5 @@ public class ProductSeeder : IActualSeeder<Product, ContextToSeed>
             products1.AddRange(products);
         }
         context.AddRange(products1);
-
     }
 }

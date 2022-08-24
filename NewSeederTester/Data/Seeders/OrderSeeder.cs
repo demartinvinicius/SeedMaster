@@ -18,9 +18,7 @@ public class OrderSeeder : IActualSeeder<Order, ContextToSeed>
                 .RuleFor(o => o.Person, f => person)
                 .Generate(30);
             orders.AddRange(ordersgen);
-
         }
         context.AddRange(orders);
-
     }
 }

@@ -7,7 +7,6 @@ namespace NewSeederTester.Data.Seeders;
 
 public class PersonSeeder : IActualSeeder<NewSeederTester.Data.Domain.Person, ContextToSeed>
 {
-
     public void Seed(ContextToSeed context, ILogger logger)
     {
         logger.LogInformation("Populating Person!");
@@ -16,7 +15,5 @@ public class PersonSeeder : IActualSeeder<NewSeederTester.Data.Domain.Person, Co
             .RuleFor(o => o.CPF, f => f.Person.Cpf(true))
             .Generate(30);
         context.AddRange(people);
-
-
     }
 }

@@ -18,8 +18,6 @@ public class SupplierSeeder : IActualSeeder<Supplier, ContextToSeed>
             .RuleFor(x => x.CNPJ, f => f.Company.Cnpj(true))
             .Generate(20);
 
-
         context.AddRange(suppliers);
-
     }
 }

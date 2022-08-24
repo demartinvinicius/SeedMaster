@@ -1,6 +1,5 @@
 ﻿namespace Test.MockedDomain;
 
-
 public class Order
 {
     public Guid Id { get; set; }

@@ -1,4 +1,3 @@
 ﻿namespace Nudes.SeedMaster.Interfaces
 {
-
 }

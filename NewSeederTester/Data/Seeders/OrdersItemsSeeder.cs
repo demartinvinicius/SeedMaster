@@ -28,6 +28,5 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, ContextToSeed>
             }
         }
         context.AddRange(orderItems);
-
     }
 }

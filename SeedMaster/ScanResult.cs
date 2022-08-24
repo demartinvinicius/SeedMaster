@@ -27,7 +27,5 @@ public partial class SeedScanner
         /// Concrete type that implements the ISeed Type.
         /// </summary>
         public Type ImplementationType { get; private set; }
-
     }
-
 }

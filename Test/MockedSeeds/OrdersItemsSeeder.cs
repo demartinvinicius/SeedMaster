@@ -12,8 +12,8 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
     {
         List<OrderItems> orderItems = new List<OrderItems>();
 
-        var orders = context.Orders.Take(3).ToList();
-        var products = context.Products.Take(4).ToList();
+        var orders = context.Orders.Local.Take(3).ToList();
+        var products = context.Products.Local.Take(4).ToList();
 
         foreach (var order in orders)
         {
@@ -29,6 +29,5 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
             }
         }
         context.AddRange(orderItems);
-
     }
 }

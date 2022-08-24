@@ -10,7 +10,5 @@ public class EnableSeederAttribute : Attribute
     public EnableSeederAttribute(bool Clean = false)
     {
         this.Clean = Clean;
-
     }
-
 }

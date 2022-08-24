@@ -61,27 +61,29 @@ namespace Test
         {
             var testqueue = new Queue<IEntityType>();
             var factqueue = new Queue<IEntityType>();
-            factqueue.Enqueue(_fixture.TestContext.People.EntityType);
-            factqueue.Enqueue(_fixture.TestContext.Suppliers.EntityType);
-            factqueue.Enqueue(_fixture.TestContext.Orders.EntityType);
-            EfCoreHelpers.FillCleanableEntitiesQueue(_fixture.TestContext, testqueue);
+            factqueue.Enqueue(_fixture.TestContextInstance.People.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.Suppliers.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.Orders.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.Products.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.OrdersItems.EntityType);
+            EfCoreHelpers.FillCleanableEntitiesQueue(_fixture.TestContextInstance, testqueue);
             Assert.All(testqueue, a => Assert.Contains(a, factqueue));
             Assert.All(factqueue, a => Assert.Contains(a, testqueue));
         }
+
         [Fact]
         public void TestFillSeedableQueue()
         {
             var testqueue = new Queue<IEntityType>();
             var factqueue = new Queue<IEntityType>();
 
-            factqueue.Enqueue(_fixture.TestContext.People.EntityType);
-            factqueue.Enqueue(_fixture.TestContext.Orders.EntityType);
-            factqueue.Enqueue(_fixture.TestContext.Products.EntityType);
-            factqueue.Enqueue(_fixture.TestContext.OrdersItems.EntityType);
-            factqueue.Enqueue(_fixture.TestContext.Suppliers.EntityType);
-            EfCoreHelpers.FillSeedableQueue(_fixture.TestContext, testqueue);
+            factqueue.Enqueue(_fixture.TestContextInstance.People.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.Orders.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.Products.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.OrdersItems.EntityType);
+            factqueue.Enqueue(_fixture.TestContextInstance.Suppliers.EntityType);
+            EfCoreHelpers.FillSeedableQueue(_fixture.TestContextInstance, testqueue);
             Assert.All(testqueue, a => Assert.Contains(a, factqueue));
-
         }
 
         [Fact]
@@ -92,18 +94,18 @@ namespace Test
                 CPF = _fixture.Faker.Person.Cpf(false),
                 Name = _fixture.Faker.Person.FullName,
             };
-            _fixture.TestContext.People.Add(person);
-            await _fixture.TestContext.SaveChangesAsync();
-            Assert.True(EfCoreHelpers.EntityHasData(_fixture.TestContext, _fixture.TestContext.People.EntityType));
+            _fixture.TestContextInstance.People.Add(person);
+            await _fixture.TestContextInstance.SaveChangesAsync();
+            Assert.True(EfCoreHelpers.EntityHasData(_fixture.TestContextInstance, _fixture.TestContextInstance.People.EntityType));
         }
 
         [Fact]
         public async void TestEntityHasDataWithNoData()
         {
-            _fixture.TestContext.People.RemoveRange(_fixture.TestContext.People.Select(a => a));
-            await _fixture.TestContext.SaveChangesAsync();
+            _fixture.TestContextInstance.People.RemoveRange(_fixture.TestContextInstance.People.Select(a => a));
+            await _fixture.TestContextInstance.SaveChangesAsync();
 
-            Assert.False(EfCoreHelpers.EntityHasData(_fixture.TestContext, _fixture.TestContext.People.EntityType));
+            Assert.False(EfCoreHelpers.EntityHasData(_fixture.TestContextInstance, _fixture.TestContextInstance.People.EntityType));
         }
 
         [Fact]
@@ -111,7 +113,7 @@ namespace Test
         {
             List<DbContext> contexts = new()
             {
-                _fixture.TestContext
+                _fixture.TestContextInstance
             };
             var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
 
@@ -120,30 +122,54 @@ namespace Test
                 CPF = _fixture.Faker.Person.Cpf(false),
                 Name = _fixture.Faker.Person.FullName
             };
-            _fixture.TestContext.People.Add(person);
+            _fixture.TestContextInstance.People.Add(person);
             var order = new Order
             {
                 OrderTime = DateTime.Now,
                 Person = person
             };
-            _fixture.TestContext.Orders.Add(order);
-            await _fixture.TestContext.SaveChangesAsync();
-
+            _fixture.TestContextInstance.Orders.Add(order);
+            await _fixture.TestContextInstance.SaveChangesAsync();
 
             EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
 
             // Act
             await seeder.Clean();
-            await _fixture.TestContext.SaveChangesAsync();
+            await _fixture.TestContextInstance.SaveChangesAsync();
 
-            Assert.False(EfCoreHelpers.EntityHasData(_fixture.TestContext, _fixture.TestContext.People.EntityType) ||
-                         EfCoreHelpers.EntityHasData(_fixture.TestContext, _fixture.TestContext.Orders.EntityType));
+            Assert.False(EfCoreHelpers.EntityHasData(_fixture.TestContextInstance, _fixture.TestContextInstance.People.EntityType) ||
+                         EfCoreHelpers.EntityHasData(_fixture.TestContextInstance, _fixture.TestContextInstance.Orders.EntityType));
         }
 
         [Fact]
         public async void CanSeedData()
         {
-            Assert.True(true);
+            List<DbContext> contexts = new()
+            {
+                _fixture.TestContextInstance
+            };
+            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
+            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
+            await seeder.Clean();
+            await _fixture.TestContextInstance.SaveChangesAsync();
+            await seeder.Seed();
+            await _fixture.TestContextInstance.SaveChangesAsync();
+            var Person = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "012.035.398-94");
+            var Supplier = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
+            var Orders = await _fixture.TestContextInstance.Orders.FirstOrDefaultAsync(a => a.OrderTime.Ticks == 623180064900943727);
+
+            var Product = _fixture.TestContextInstance.Suppliers.Join(
+                _fixture.TestContextInstance.Products,
+                supp => supp.Id,
+                prod => prod.Supplier.Id,
+                (supp, prod) => new { Supp = supp, Prod = prod })
+                .Where(prods => prods.Supp.Name == "Barros EIRELI" &&
+                                prods.Prod.ProductName == "Inteligente Madeira Sapatos");
+
+            Assert.Equal("Bryan Barros", Person?.Name);
+            Assert.Equal("Xavier S.A.", Supplier?.Name);
+            Assert.NotNull(Orders);
+            Assert.NotNull(Product);
         }
     }
 }

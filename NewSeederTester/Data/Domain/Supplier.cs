@@ -1,7 +1,5 @@
 ﻿namespace NewSeederTester.Data.Domain;
 
-
-
 public class Supplier
 {
     public Guid Id { get; set; }

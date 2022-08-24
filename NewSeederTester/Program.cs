@@ -23,12 +23,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         configHost.AddJsonFile("appsettings.json");
         myconfig = configHost.Build();
         NLog.LogManager.Configuration = new NLogLoggingConfiguration(myconfig.GetSection("NLog"));
-
     })
     .ConfigureServices(services =>
     {
-
-
         services.AddLogging(x => x.AddConsole());
         services.AddSingleton(loggerFactory);
 
@@ -38,24 +35,12 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IEnumerable<ScanResult>>(provider => SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()));
 
         services.AddScoped<ISeeder, EfCoreSeeder>();
-
-
     }).Build();
-
-
 
 var coreSeeder = host.Services.GetService<ISeeder>();
 coreSeeder.Seed();
 
-
-
-
 //host.RunAsync();
-
-
-
-
-
 
 //logger.LogInformation(host.Services.GetService<ISeeder>().ToString());
 
