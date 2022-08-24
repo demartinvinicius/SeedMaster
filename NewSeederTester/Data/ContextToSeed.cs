@@ -1,11 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NewSeederTester.Data;
 
@@ -15,7 +10,7 @@ public class ContextToSeed : DbContext
     {
 
     }
-    public ContextToSeed(DbContextOptions<ContextToSeed> options) : base (options)
+    public ContextToSeed(DbContextOptions<ContextToSeed> options) : base(options)
     {
 
     }
@@ -33,6 +28,6 @@ public class ContextToSeed : DbContext
     public DbSet<OrderItems> OrdersItems { get; set; }
 
     [EnableSeeder]
-    public DbSet<Supplier> Suppliers { get; set; }    
-   
+    public DbSet<Supplier> Suppliers { get; set; }
+
 }

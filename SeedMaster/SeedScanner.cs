@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections;
+﻿using Nudes.SeedMaster.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -20,13 +17,13 @@ public partial class SeedScanner
 
         return exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
             .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,>))
-            .Select(inter => 
+            .Select(inter =>
                    new ScanResult(inter, exportedTypes
                          .Where(implemation => inter.IsAssignableFrom(implemation)).Single()));
     }
 
 
-   
- 
+
+
 
 }

@@ -1,17 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
-using NewSeederTester.Data.Domain;
-using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bogus;
+﻿using Bogus;
 using Bogus.Extensions.Brazil;
+using Microsoft.Extensions.Logging;
+using Nudes.SeedMaster.Interfaces;
 
 namespace NewSeederTester.Data.Seeders;
 
-public class PersonSeeder : IActualSeeder<NewSeederTester.Data.Domain.Person,ContextToSeed>
+public class PersonSeeder : IActualSeeder<NewSeederTester.Data.Domain.Person, ContextToSeed>
 {
 
     public void Seed(ContextToSeed context, ILogger logger)
@@ -23,6 +17,6 @@ public class PersonSeeder : IActualSeeder<NewSeederTester.Data.Domain.Person,Con
             .Generate(30);
         context.AddRange(people);
 
-        
+
     }
 }

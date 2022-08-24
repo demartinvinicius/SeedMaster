@@ -2,7 +2,7 @@
 
 namespace Nudes.SeedMaster;
 
-public partial class SeedScanner 
+public partial class SeedScanner
 {
     /// <summary>
     /// Result of performing a scan.
@@ -27,7 +27,7 @@ public partial class SeedScanner
         /// Concrete type that implements the ISeed Type.
         /// </summary>
         public Type ImplementationType { get; private set; }
-        
+
     }
 
 }

@@ -1,12 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Bogus;
+using Microsoft.Extensions.Logging;
 using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bogus;
 
 namespace NewSeederTester.Data.Seeders;
 
@@ -15,13 +10,13 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, ContextToSeed>
     public void Seed(ContextToSeed context, ILogger logger)
     {
         List<OrderItems> orderItems = new List<OrderItems>();
-                
+
         var orders = context.Orders.Take(3).ToList();
         var products = context.Products.Take(4).ToList();
 
-        foreach(var order in orders)
+        foreach (var order in orders)
         {
-            foreach(var product in products)
+            foreach (var product in products)
             {
                 var numitems = new Faker().Random.Int(1, 4);
                 var orderi = new Faker<OrderItems>("pt_BR")
@@ -33,6 +28,6 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, ContextToSeed>
             }
         }
         context.AddRange(orderItems);
-        
+
     }
 }

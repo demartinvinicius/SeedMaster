@@ -1,13 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Bogus;
+using Microsoft.Extensions.Logging;
 using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bogus;
-using Test.MockedDomain;
 using Test.MockedContext;
+using Test.MockedDomain;
 
 namespace Test.MockedSeeds;
 
@@ -16,13 +11,13 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
     public void Seed(TestContext context, ILogger logger)
     {
         List<OrderItems> orderItems = new List<OrderItems>();
-                
+
         var orders = context.Orders.Take(3).ToList();
         var products = context.Products.Take(4).ToList();
 
-        foreach(var order in orders)
+        foreach (var order in orders)
         {
-            foreach(var product in products)
+            foreach (var product in products)
             {
                 var numitems = new Faker().Random.Int(1, 4);
                 var orderi = new Faker<OrderItems>("pt_BR")
@@ -34,6 +29,6 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
             }
         }
         context.AddRange(orderItems);
-        
+
     }
 }

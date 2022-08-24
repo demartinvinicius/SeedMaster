@@ -1,11 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nudes.SeedMaster.Interfaces;
 
@@ -15,7 +9,7 @@ namespace Nudes.SeedMaster.Interfaces;
 /// </summary>
 /// <typeparam name="TContext">Context Type</typeparam>
 /// <typeparam name="TDbSet">DbSet Type</typeparam>
-public interface IActualSeeder<TDbSet,TContext> where TContext : DbContext
-{ 
-    public abstract void Seed(TContext context,ILogger logger);
+public interface IActualSeeder<TDbSet, TContext> where TContext : DbContext
+{
+    public abstract void Seed(TContext context, ILogger logger);
 }

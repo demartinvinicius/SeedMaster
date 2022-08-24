@@ -1,10 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-
+﻿using Bogus;
+using Microsoft.Extensions.Logging;
 using Nudes.SeedMaster.Interfaces;
-using Bogus;
-using Bogus.Extensions.Brazil;
-using Test.MockedDomain;
 using Test.MockedContext;
+using Test.MockedDomain;
 
 namespace Test.MockedSeeds;
 
@@ -14,7 +12,7 @@ public class OrderSeeder : IActualSeeder<Order, TestContext>
     {
         List<Order> orders = new List<Order>();
         logger.LogInformation("Populating Orders");
-        foreach(var person in context.People)
+        foreach (var person in context.People)
         {
             var ordersgen = new Faker<Order>("pt_BR")
                 .RuleFor(o => o.OrderTime, f => f.Date.Past(2))
@@ -24,6 +22,6 @@ public class OrderSeeder : IActualSeeder<Order, TestContext>
 
         }
         context.AddRange(orders);
-        
+
     }
 }

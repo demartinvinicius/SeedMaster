@@ -3,11 +3,6 @@ using Microsoft.Extensions.Logging;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using NLog.Targets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Test.MockedContext;
 
 namespace Test.CollectionFixture;
@@ -34,12 +29,12 @@ public class SeederFixture
             conf.AddNLog(config);
         });
 
-        // TODO: Implement a configurable bogus with a particular random seed.
+       
         Faker = new Faker();
         Faker.Random = new Randomizer(1);
     }
 
-    
+
 }
 
 [CollectionDefinition("Seeder Collection")]

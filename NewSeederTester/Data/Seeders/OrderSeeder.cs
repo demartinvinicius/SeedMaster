@@ -1,13 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Bogus;
+using Microsoft.Extensions.Logging;
 using NewSeederTester.Data.Domain;
 using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bogus;
-using Bogus.Extensions.Brazil;
 
 namespace NewSeederTester.Data.Seeders;
 
@@ -17,7 +11,7 @@ public class OrderSeeder : IActualSeeder<Order, ContextToSeed>
     {
         List<Order> orders = new List<Order>();
         logger.LogInformation("Populating Orders");
-        foreach(var person in context.People)
+        foreach (var person in context.People)
         {
             var ordersgen = new Faker<Order>("pt_BR")
                 .RuleFor(o => o.OrderTime, f => f.Date.Past(2))
@@ -27,6 +21,6 @@ public class OrderSeeder : IActualSeeder<Order, ContextToSeed>
 
         }
         context.AddRange(orders);
-        
+
     }
 }

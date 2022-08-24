@@ -23,7 +23,6 @@ namespace Nudes.SeedMaster.Seeder
         private readonly Queue<IEntityType> seedableQueue;
         private readonly Queue<IEntityType> cleanableQueue;
         private readonly List<string> entitiesAlreadySeeded;
-
         private readonly DbContext context;
 
         /// <summary>

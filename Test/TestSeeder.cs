@@ -80,7 +80,7 @@ namespace Test
             factqueue.Enqueue(_fixture.TestContext.OrdersItems.EntityType);
             factqueue.Enqueue(_fixture.TestContext.Suppliers.EntityType);
             EfCoreHelpers.FillSeedableQueue(_fixture.TestContext, testqueue);
-            Assert.All(testqueue, a => Assert.Contains(a,factqueue));
+            Assert.All(testqueue, a => Assert.Contains(a, factqueue));
 
         }
 
@@ -129,7 +129,7 @@ namespace Test
             _fixture.TestContext.Orders.Add(order);
             await _fixture.TestContext.SaveChangesAsync();
 
-            
+
             EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
 
             // Act
@@ -140,5 +140,10 @@ namespace Test
                          EfCoreHelpers.EntityHasData(_fixture.TestContext, _fixture.TestContext.Orders.EntityType));
         }
 
+        [Fact]
+        public async void CanSeedData()
+        {
+            Assert.True(true);
+        }
     }
 }

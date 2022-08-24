@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NewSeederTester.Data;
 using NLog.Extensions.Logging;
 using Nudes.SeedMaster;
@@ -28,7 +27,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices(services =>
     {
-        
+
 
         services.AddLogging(x => x.AddConsole());
         services.AddSingleton(loggerFactory);
@@ -37,9 +36,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         config.UseSqlServer(myconfig.GetConnectionString("MainConnection")));
         services.AddScoped<DbContext>(provider => provider.GetService<ContextToSeed>());
         services.AddScoped<IEnumerable<ScanResult>>(provider => SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()));
-        
-        services.AddScoped<ISeeder,EfCoreSeeder>();
-        
+
+        services.AddScoped<ISeeder, EfCoreSeeder>();
+
 
     }).Build();
 
@@ -47,8 +46,8 @@ IHost host = Host.CreateDefaultBuilder(args)
 
 var coreSeeder = host.Services.GetService<ISeeder>();
 coreSeeder.Seed();
-   
-    
+
+
 
 
 //host.RunAsync();
