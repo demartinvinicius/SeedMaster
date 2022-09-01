@@ -9,7 +9,7 @@ namespace Test.CollectionFixture;
 
 public class SeederFixture
 {
-    public ILoggerFactory LoggerF { get; private set; }
+    public ILoggerFactory LogFactory { get; private set; }
     public Faker Faker { get; private set; }
 
     public TestContext TestContextInstance { get; private set; }
@@ -17,20 +17,13 @@ public class SeederFixture
     public SeederFixture()
     {
         TestContextInstance = new();
-        var target = new FileTarget()
+
+        LogFactory = LoggerFactory.Create(conf => { });
+
+        Faker = new Faker
         {
-            FileName = @"C:\tmp\SeederLog.txt"
+            Random = new Randomizer(1)
         };
-        var config = new LoggingConfiguration();
-        config.AddRuleForAllLevels(target);
-
-        LoggerF = LoggerFactory.Create(conf =>
-        {
-            conf.AddNLog(config);
-        });
-
-        Faker = new Faker();
-        Faker.Random = new Randomizer(1);
     }
 }
 

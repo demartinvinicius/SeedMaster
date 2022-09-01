@@ -6,12 +6,11 @@ using Test.MockedDomain;
 
 namespace Test.MockedSeeds;
 
-public class OrderSeeder : IActualSeeder<Order, TestContext>
+public class OrderSeeder : ISeed<Order, TestContext>
 {
-    public void Seed(TestContext context, ILogger logger)
+    public Task Seed(TestContext context)
     {
-        List<Order> orders = new List<Order>();
-        logger.LogInformation("Populating Orders");
+        var orders = new List<Order>();
         foreach (var person in context.People.Local)
         {
             var ordersgen = new Faker<Order>("pt_BR")
@@ -22,5 +21,7 @@ public class OrderSeeder : IActualSeeder<Order, TestContext>
             orders.AddRange(ordersgen);
         }
         context.AddRange(orders);
+
+        return Task.CompletedTask;
     }
 }

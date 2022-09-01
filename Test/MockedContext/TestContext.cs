@@ -6,8 +6,6 @@ namespace Test.MockedContext;
 
 public class TestContext : DbContext
 {
-    private readonly StreamWriter _logStream = new StreamWriter(@"c:\tmp\logdb.txt", append: false);
-
     public TestContext()
     {
     }
@@ -15,7 +13,6 @@ public class TestContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseInMemoryDatabase("DatabaseForTesting");
-        optionsBuilder.LogTo(_logStream.WriteLine);
         optionsBuilder.EnableSensitiveDataLogging();
     }
 
@@ -37,12 +34,10 @@ public class TestContext : DbContext
     public override void Dispose()
     {
         base.Dispose();
-        _logStream.Dispose();
     }
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        await _logStream.DisposeAsync();
     }
 }

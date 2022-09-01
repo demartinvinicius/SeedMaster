@@ -6,11 +6,11 @@ using Test.MockedDomain;
 
 namespace Test.MockedSeeds;
 
-public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
+public class OrdersItemsSeeder : ISeed<OrderItems, TestContext>
 {
-    public void Seed(TestContext context, ILogger logger)
+    public Task Seed(TestContext context)
     {
-        List<OrderItems> orderItems = new List<OrderItems>();
+        var orderItems = new List<OrderItems>();
 
         var orders = context.Orders.Local.Take(3).ToList();
         var products = context.Products.Local.Take(4).ToList();
@@ -29,5 +29,7 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, TestContext>
             }
         }
         context.AddRange(orderItems);
+
+        return Task.CompletedTask;
     }
 }

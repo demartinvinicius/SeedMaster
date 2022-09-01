@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nudes.SeedMaster;
+using Nudes.SeedMaster.Extensions;
 using Nudes.SeedMaster.Interfaces;
 using Nudes.SeedMaster.Seeder;
 using PocApi.Data;
@@ -26,8 +27,7 @@ builder.Services.AddScoped<DbContext>(provider => provider.GetService<Sample2DbC
 builder.Services.AddScoped<DbContext>(provider => provider.GetService<TestDbContext>());
 
 // Scanning our assembly and adding all ISeed
-builder.Services.AddScoped(SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()));
-ForEach(d => builder.Services.AddScoped(d.InterfaceType, d.ImplementationType));
+builder.Services.AddSeedFrom(Assembly.GetExecutingAssembly());
 
 // Adding our EfCoreSeeder service
 builder.Services.AddScoped<ISeeder, EfCoreSeeder>();

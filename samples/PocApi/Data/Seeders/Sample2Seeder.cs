@@ -5,16 +5,16 @@ using PocApi.Data.Domain;
 
 namespace PocApi.Data.Seeders
 {
-    public class Sample2Seed : BaseSeed<Sample2DbContext>
+    public class Sample2Seed : ISeed<Sample2, Sample2DbContext>
     {
-        public override async Task Seed(Sample2DbContext dbContext)
+        public Task Seed(Sample2DbContext dbContext)
         {
             dbContext.Samples2.Add(new Sample2
             {
                 SampleText = "Sample"
             });
 
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
     }
 }

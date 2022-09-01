@@ -6,12 +6,11 @@ using Test.MockedDomain;
 
 namespace Test.MockedSeeds;
 
-public class ProductSeeder : IActualSeeder<Product, TestContext>
+public class ProductSeeder : ISeed<Product, TestContext>
 {
-    public void Seed(TestContext context, ILogger logger)
+    public Task Seed(TestContext context)
     {
-        logger.LogInformation("Populating data to product");
-        List<Product> products1 = new List<Product>();
+        var products1 = new List<Product>();
 
         foreach (var supplier in context.Suppliers.Local.OrderBy(a => a.Name))
         {
@@ -25,5 +24,7 @@ public class ProductSeeder : IActualSeeder<Product, TestContext>
             products1.AddRange(products);
         }
         context.AddRange(products1);
+
+        return Task.CompletedTask;
     }
 }

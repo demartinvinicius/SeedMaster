@@ -8,17 +8,17 @@ namespace Nudes.SeedMaster;
 /// <summary>
 /// Class that can be used to find all the seeds from a collection of types.
 /// </summary>
-public partial class SeedScanner
+public class SeedScanner
 {
-    public static IEnumerable<ScanResult> GetSeeds(Assembly assembly)
+    public static IEnumerable<ScanResult> FindSeedersInAssembly(params Assembly[] assemblies)
     {
-        var exportedTypes = assembly.GetExportedTypes()
-            .Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition);
+        var exportedTypes = assemblies.SelectMany(d => d.GetExportedTypes().Distinct())
+                                      .Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition);
 
         return exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
-            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,>))
-            .Select(inter =>
-                   new ScanResult(inter, exportedTypes
-                         .Where(implemation => inter.IsAssignableFrom(implemation)).Single()));
+                            .Where(inter => inter != null
+                                         && inter.GetGenericTypeDefinition() == typeof(ISeed<,>))
+                            .Select(inter => new ScanResult(inter, exportedTypes.Where(implementation => inter.IsAssignableFrom(implementation))
+                                                                                                              .Single()));
     }
 }

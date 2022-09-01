@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace PocApi.Data.Seeders
 {
-    public class TestSeeder : BaseSeed<TestDbContext>
+    public class TestSeeder : ISeed<Test, TestDbContext>
     {
-        public override async Task Seed(TestDbContext dbContext)
+        public Task Seed(TestDbContext dbContext)
         {
             dbContext.Add(new Test
             {
@@ -34,11 +34,11 @@ namespace PocApi.Data.Seeders
                 Name = "right1",
                 Lefts = new List<ManyLeft>()
             };
-            
+
             var right2 = new ManyRight()
             {
-               Name = "right2",
-               Lefts = new List<ManyLeft>()
+                Name = "right2",
+                Lefts = new List<ManyLeft>()
             };
 
             left1.Rights.Add(right1);
@@ -50,7 +50,8 @@ namespace PocApi.Data.Seeders
 
             dbContext.Lefts.AddRange(left1, left2);
             dbContext.Rights.AddRange(right1, right2);
-            await Task.CompletedTask;
+
+            return Task.CompletedTask;
         }
     }
 }

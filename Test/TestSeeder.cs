@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using Nudes.SeedMaster;
+using Nudes.SeedMaster.Extensions;
 using Nudes.SeedMaster.Interfaces;
 using Nudes.SeedMaster.Seeder;
 using System.Reflection;
@@ -27,7 +28,7 @@ namespace Test
         [Fact]
         public void GetSeedNumberTester()
         {
-            var seeds = SeedScanner.GetSeeds(Assembly.GetExecutingAssembly());
+            var seeds = SeedScanner.FindSeedersInAssembly(Assembly.GetExecutingAssembly());
 
             seeds.Should().HaveCount(5, "We have 5 ActualSeeders in this test");
         }
@@ -40,19 +41,19 @@ namespace Test
         [InlineData(typeof(SupplierSeeder))]
         public void GetAllSeedersImplementationsTester(Type seeder)
         {
-            var implements = SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()).Select(a => a.ImplementationType);
+            var implements = SeedScanner.FindSeedersInAssembly(Assembly.GetExecutingAssembly()).Select(a => a.ImplementationType);
             Assert.Contains(seeder, implements);
         }
 
         [Theory]
-        [InlineData(typeof(IActualSeeder<Order, TestContext>))]
-        [InlineData(typeof(IActualSeeder<OrderItems, TestContext>))]
-        [InlineData(typeof(IActualSeeder<Person, TestContext>))]
-        [InlineData(typeof(IActualSeeder<Product, TestContext>))]
-        [InlineData(typeof(IActualSeeder<Supplier, TestContext>))]
+        [InlineData(typeof(ISeed<Order, TestContext>))]
+        [InlineData(typeof(ISeed<OrderItems, TestContext>))]
+        [InlineData(typeof(ISeed<Person, TestContext>))]
+        [InlineData(typeof(ISeed<Product, TestContext>))]
+        [InlineData(typeof(ISeed<Supplier, TestContext>))]
         public void GetAllSeedersInterfacesTester(Type interfacename)
         {
-            var interfacesnames = SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()).Select(a => a.InterfaceType.FullName);
+            var interfacesnames = SeedScanner.FindSeedersInAssembly(Assembly.GetExecutingAssembly()).Select(a => a.InterfaceType.FullName);
             Assert.Contains(interfacename.FullName, interfacesnames);
         }
 
@@ -111,11 +112,7 @@ namespace Test
         [Fact]
         public async void TestCanCleanData()
         {
-            List<DbContext> contexts = new()
-            {
-                _fixture.TestContextInstance
-            };
-            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
+            var logger = _fixture.LogFactory.CreateLogger<EfCoreSeeder>();
 
             var person = new Person
             {
@@ -131,7 +128,7 @@ namespace Test
             _fixture.TestContextInstance.Orders.Add(order);
             await _fixture.TestContextInstance.SaveChangesAsync();
 
-            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
+            var seeder = new EfCoreSeeder(_fixture.TestContextInstance, SeedScanner.FindSeedersInAssembly(Assembly.GetExecutingAssembly()), logger);
 
             // Act
             await seeder.Clean();
@@ -144,21 +141,17 @@ namespace Test
         [Fact]
         public async void CanSeedData()
         {
-            List<DbContext> contexts = new()
-            {
-                _fixture.TestContextInstance
-            };
-            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
-            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
-            await seeder.Clean();
-            await _fixture.TestContextInstance.SaveChangesAsync();
-            await seeder.Seed();
-            await _fixture.TestContextInstance.SaveChangesAsync();
-            var Person = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "012.035.398-94");
-            var Supplier = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
-            var Orders = await _fixture.TestContextInstance.Orders.FirstOrDefaultAsync(a => a.OrderTime.Ticks == 623180064900943727);
+            var logger = _fixture.LogFactory.CreateLogger<EfCoreSeeder>();
 
-            var Product = _fixture.TestContextInstance.Suppliers.Join(
+            var seeder = new EfCoreSeeder(_fixture.TestContextInstance, SeedScanner.FindSeedersInAssembly(Assembly.GetExecutingAssembly()), logger);
+
+            await seeder.Run();
+
+            var person = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "012.035.398-94");
+            var supplier = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
+            var orders = await _fixture.TestContextInstance.Orders.FirstOrDefaultAsync(a => a.OrderTime.Ticks == 623180064900943727);
+
+            var product = _fixture.TestContextInstance.Suppliers.Join(
                 _fixture.TestContextInstance.Products,
                 supp => supp.Id,
                 prod => prod.Supplier.Id,
@@ -166,10 +159,14 @@ namespace Test
                 .Where(prods => prods.Supp.Name == "Barros EIRELI" &&
                                 prods.Prod.ProductName == "Inteligente Madeira Sapatos");
 
-            Assert.Equal("Bryan Barros", Person?.Name);
-            Assert.Equal("Xavier S.A.", Supplier?.Name);
-            Assert.NotNull(Orders);
-            Assert.NotNull(Product);
+            person.Should().NotBeNull();
+            person.Name.Should().Be("Bryan Barros");
+
+            Assert.Equal("Xavier S.A.", supplier?.Name);
+            
+            Assert.NotNull(orders);
+            
+            Assert.NotNull(product);
         }
     }
 }

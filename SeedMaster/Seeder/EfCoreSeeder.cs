@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static Nudes.SeedMaster.SeedScanner;
 
 namespace Nudes.SeedMaster.Seeder
 {
@@ -16,14 +15,35 @@ namespace Nudes.SeedMaster.Seeder
     /// </summary>
     public class EfCoreSeeder : ISeeder
     {
-        private readonly IEnumerable<DbContext> contexts;
         private readonly IEnumerable<ScanResult> seeders;
+
         private readonly ILogger<EfCoreSeeder> logger;
-        private readonly ILoggerFactory loggerFactory;
+
         private readonly Queue<IEntityType> seedableQueue;
         private readonly Queue<IEntityType> cleanableQueue;
         private readonly List<string> entitiesAlreadySeeded;
         private readonly DbContext context;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="seedTypes"></param>
+        /// <param name="logger"></param>
+        /// <param name="loggerFactory"></param>
+        public EfCoreSeeder(DbContext context, IEnumerable<ScanResult> seedTypes, ILogger<EfCoreSeeder> logger)
+        {
+            seedableQueue = new Queue<IEntityType>();
+            cleanableQueue = new Queue<IEntityType>();
+            entitiesAlreadySeeded = new List<string>();
+
+            this.logger = logger;
+            this.seeders = seedTypes;
+            this.context = context;
+
+            EfCoreHelpers.FillSeedableQueue(context, seedableQueue);
+            EfCoreHelpers.FillCleanableEntitiesQueue(context, cleanableQueue);
+        }
 
         /// <summary>
         /// Try to find a seed for a entityType and invokes it's seed method to populate the entity.
@@ -32,38 +52,31 @@ namespace Nudes.SeedMaster.Seeder
         /// <returns>true when the method is successful</returns>
         private void InvokeSeed(IEntityType entityType)
         {
-            var seedClass = seeders.Where(x => x.InterfaceType.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).Select(x => x.ImplementationType).SingleOrDefault();
-            if (seedClass == null)
-            {
-                throw new EntryPointNotFoundException($"Not found a interface seeder for the entity {entityType.Name}");
-            }
-            var seeder = Activator.CreateInstance(seedClass);
-            var loggerForSeeder = loggerFactory.CreateLogger(seedClass.Name);
-            var method = seedClass.GetMethod("Seed");
-            if (method == null)
-            {
-                throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
-            }
-            seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
-        }
+            var seedClasses = seeders.Where(x => x.InterfaceType.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).Select(x => x.ImplementationType)
+                                     .ToList();
 
-        public EfCoreSeeder(IEnumerable<DbContext> contexts, IEnumerable<ScanResult> seedTypes, ILogger<EfCoreSeeder> logger, ILoggerFactory loggerFactory)
-        {
-            seedableQueue = new Queue<IEntityType>();
-            cleanableQueue = new Queue<IEntityType>();
-            entitiesAlreadySeeded = new List<string>();
-            this.contexts = contexts;
-            this.logger = logger;
-            this.loggerFactory = loggerFactory;
-            this.context = contexts.FirstOrDefault();
-            this.seeders = seedTypes;
-            EfCoreHelpers.FillSeedableQueue(context, seedableQueue);
-            EfCoreHelpers.FillCleanableEntitiesQueue(context, cleanableQueue);
+            seedClasses.ForEach(_seedType =>
+            {
+                if (_seedType == null)
+                {
+                    throw new EntryPointNotFoundException($"Not found a interface seeder for the entity {entityType.Name}");
+                }
+
+                var seeder = Activator.CreateInstance(_seedType);
+                var method = _seedType.GetMethod("Seed");
+
+                if (method == null)
+                {
+                    throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
+                }
+
+                _seedType.GetMethod("Seed").Invoke(seeder, new object[] { context });
+            });
         }
 
         public virtual async Task Clean()
         {
-            int avoidloop = cleanableQueue.Count();
+            int avoidloop = cleanableQueue.Count;
             while (cleanableQueue.Count > 0 && avoidloop > 0)
             {
                 var entityType = cleanableQueue.Peek();
@@ -99,7 +112,7 @@ namespace Nudes.SeedMaster.Seeder
             }
         }
 
-        public virtual async Task Seed()
+        public virtual Task Seed()
         {
             int avoidloop = seedableQueue.Count;
 
@@ -140,12 +153,15 @@ namespace Nudes.SeedMaster.Seeder
             {
                 logger?.LogInformation("Seed finalized");
             }
+
+            return Task.CompletedTask;
         }
 
         private bool EntityAlreadySeedOrHasData(IEntityType entity)
         {
             if (entitiesAlreadySeeded.Contains(entity.ClrType.Name))
                 return true;
+
             return EfCoreHelpers.EntityHasData(context, entity);
         }
 
@@ -153,11 +169,7 @@ namespace Nudes.SeedMaster.Seeder
         {
             logger?.LogInformation("Starting commit");
 
-            foreach (var db in contexts)
-            {
-                logger?.LogInformation("Commiting changes to {db}", db);
-                await db.SaveChangesAsync();
-            }
+            await context.SaveChangesAsync();
 
             logger?.LogInformation("Commit finalized");
         }

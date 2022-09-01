@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SeedMaster", "SeedMaster\Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{40B31081-02FF-474B-9E72-61B92441B007}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PocApi", "samples\PocApi\PocApi.csproj", "{B4FC5C44-A112-4307-8378-163E252A8EE1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{40B31081-02FF-474B-9E72-61B92441B007}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40B31081-02FF-474B-9E72-61B92441B007}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40B31081-02FF-474B-9E72-61B92441B007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4FC5C44-A112-4307-8378-163E252A8EE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4FC5C44-A112-4307-8378-163E252A8EE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4FC5C44-A112-4307-8378-163E252A8EE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4FC5C44-A112-4307-8378-163E252A8EE1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,12 +7,10 @@ using Test.MockedDomain;
 
 namespace Test.MockedSeeds;
 
-public class SupplierSeeder : IActualSeeder<Supplier, TestContext>
+public class SupplierSeeder : ISeed<Supplier, TestContext>
 {
-    public void Seed(TestContext context, ILogger logger)
+    public Task Seed(TestContext context)
     {
-        logger.LogInformation("Populating Supplier");
-
         var suppliers = new Faker<Supplier>("pt_BR")
             .UseSeed(1)
             .RuleFor(x => x.Name, f => f.Company.CompanyName(0))
@@ -20,5 +18,7 @@ public class SupplierSeeder : IActualSeeder<Supplier, TestContext>
             .Generate(20);
 
         context.AddRange(suppliers);
+
+        return Task.CompletedTask;
     }
 }

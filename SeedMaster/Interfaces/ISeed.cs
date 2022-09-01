@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Nudes.SeedMaster.Interfaces
 {
@@ -11,7 +12,7 @@ namespace Nudes.SeedMaster.Interfaces
         /// Seed Method that will inject data into the context
         /// </summary>
         /// <param name="context">context that data will be injected into</param>
-        Task Seed(object context);
+        //Task Seed(object context);
     }
 
     /// <summary>
@@ -26,4 +27,15 @@ namespace Nudes.SeedMaster.Interfaces
         /// <param name="context">context that data will be injected into</param>
         Task Seed(TContext context);
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TEntity"></typeparam>
+    /// <typeparam name="TContext"></typeparam>
+    public interface ISeed<TEntity, TContext> : ISeed<TContext> where TContext : DbContext
+    {
+        Task Seed(object context) => Seed(context as TContext);
+    }
+
 }
