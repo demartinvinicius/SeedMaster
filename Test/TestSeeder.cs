@@ -11,6 +11,7 @@ using Test.CollectionFixture;
 using Test.MockedContext;
 using Test.MockedDomain;
 using Test.MockedSeeds;
+using static Nudes.SeedMaster.SeedScanner;
 
 namespace Test
 {
@@ -29,7 +30,20 @@ namespace Test
         {
             var seeds = SeedScanner.GetSeeds(Assembly.GetExecutingAssembly());
 
-            seeds.Should().HaveCount(5, "We have 5 ActualSeeders in this test");
+            seeds.Should().HaveCount(6, "We have 6 ActualSeeders in this test");
+        }
+
+        [Fact]
+        public void GetGlobalSeederTester()
+        {
+            var seeds = SeedScanner.GetSeeds(Assembly.GetExecutingAssembly());
+            var seedtype = new ScanResult(typeof(IActualSeeder<TestContext>),typeof(GlobalSeed),ScanResult.SeedTypes.GlobalSeed);
+
+            seeds.Should().ContainSingle(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed);
+            seeds.Should().ContainSingle(x => x.ImplementationType == typeof(GlobalSeed));
+            seeds.Should().ContainSingle(x => x.InterfaceType == typeof(IActualSeeder<TestContext>));
+
+            
         }
 
         [Theory]
@@ -155,6 +169,7 @@ namespace Test
             await seeder.Seed();
             await _fixture.TestContextInstance.SaveChangesAsync();
             var Person = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "012.035.398-94");
+            var PersonGlobal = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "026.835.079-50");
             var Supplier = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
             var Orders = await _fixture.TestContextInstance.Orders.FirstOrDefaultAsync(a => a.OrderTime.Ticks == 623180064900943727);
 
@@ -167,6 +182,7 @@ namespace Test
                                 prods.Prod.ProductName == "Inteligente Madeira Sapatos");
 
             Assert.Equal("Bryan Barros", Person?.Name);
+            Assert.Equal("Joana Santos", PersonGlobal?.Name);
             Assert.Equal("Xavier S.A.", Supplier?.Name);
             Assert.NotNull(Orders);
             Assert.NotNull(Product);

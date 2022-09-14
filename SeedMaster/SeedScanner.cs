@@ -15,10 +15,19 @@ public partial class SeedScanner
         var exportedTypes = assembly.GetExportedTypes()
             .Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition);
 
-        return exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
+        var EntitySeeds = exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
             .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,>))
             .Select(inter =>
                    new ScanResult(inter, exportedTypes
-                         .Where(implemation => inter.IsAssignableFrom(implemation)).Single()));
+                         .Where(implemation => inter.IsAssignableFrom(implemation)).Single(), ScanResult.SeedTypes.EntitySeed)).ToList();
+
+        var GlobalSeeds = exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
+            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<>))
+            .Select(inter => new ScanResult(inter, exportedTypes.Where(implementation => inter.IsAssignableFrom(implementation)).Single(),ScanResult.SeedTypes.GlobalSeed));
+
+        EntitySeeds.AddRange(GlobalSeeds);
+        return EntitySeeds;
     }
+
+    
 }

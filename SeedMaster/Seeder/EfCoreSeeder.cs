@@ -32,7 +32,10 @@ namespace Nudes.SeedMaster.Seeder
         /// <returns>true when the method is successful</returns>
         private void InvokeSeed(IEntityType entityType)
         {
-            var seedClass = seeders.Where(x => x.InterfaceType.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).Select(x => x.ImplementationType).SingleOrDefault();
+            var seedClass = seeders
+                .Where(x => x.SeedType == ScanResult.SeedTypes.EntitySeed)
+                .Where(x => x.InterfaceType.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).Select(x => x.ImplementationType).SingleOrDefault();
+
             if (seedClass == null)
             {
                 throw new EntryPointNotFoundException($"Not found a interface seeder for the entity {entityType.Name}");
@@ -45,6 +48,27 @@ namespace Nudes.SeedMaster.Seeder
                 throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
             }
             seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
+        }
+        private void InvokeGlobalSeeds()
+        {
+            var seedClasses = seeders
+                .Where(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed).Select(x => x.ImplementationType);
+
+            if (seedClasses == null)
+                return;
+
+            foreach(var seedClass in seedClasses)
+            {
+                var seeder = Activator.CreateInstance(seedClass);
+                var loggerForSeeder = loggerFactory.CreateLogger(seedClass.Name);
+                var method = seedClass.GetMethod("Seed");
+                if (method == null)
+                {
+                    throw new EntryPointNotFoundException($"Not found a Seed method on a GlobalSeeder");
+                }
+                method.Invoke(seeder, new object[] { context, loggerForSeeder });   
+            }
+
         }
 
         public EfCoreSeeder(IEnumerable<DbContext> contexts, IEnumerable<ScanResult> seedTypes, ILogger<EfCoreSeeder> logger, ILoggerFactory loggerFactory)
@@ -101,6 +125,9 @@ namespace Nudes.SeedMaster.Seeder
 
         public virtual async Task Seed()
         {
+
+            InvokeGlobalSeeds();
+
             int avoidloop = seedableQueue.Count;
 
             while (seedableQueue.Count > 0 && avoidloop >= 0)
