@@ -23,17 +23,18 @@ namespace Nudes.SeedMaster.Seeder
         private readonly Queue<IEntityType> seedableQueue;
         private readonly Queue<IEntityType> cleanableQueue;
         private readonly List<string> entitiesAlreadySeeded;
-        private readonly DbContext context;
+        
 
         /// <summary>
         /// Try to find a seed for a entityType and invokes it's seed method to populate the entity.
         /// </summary>
         /// <param name="entityType">The entity to populate</param>
         /// <returns>true when the method is successful</returns>
-        private void InvokeSeed(IEntityType entityType)
+        private void InvokeSeed(IEntityType entityType, DbContext context)
         {
             var seedClass = seeders
                 .Where(x => x.SeedType == ScanResult.SeedTypes.EntitySeed)
+                .Where(x => x.ContextType == context.GetType())
                 .Where(x => x.InterfaceType.GenericTypeArguments.Any(x => x.FullName == entityType.Name)).Select(x => x.ImplementationType).SingleOrDefault();
 
             if (seedClass == null)
@@ -49,10 +50,11 @@ namespace Nudes.SeedMaster.Seeder
             }
             seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
         }
-        private void InvokeGlobalSeeds()
+        private void InvokeGlobalSeeds(DbContext context)
         {
             var seedClasses = seeders
-                .Where(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed).Select(x => x.ImplementationType);
+                .Where(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed &&
+                x.ContextType == context.GetType()).Select(x => x.ImplementationType);
 
             if (seedClasses == null)
                 return;
@@ -79,97 +81,108 @@ namespace Nudes.SeedMaster.Seeder
             this.contexts = contexts;
             this.logger = logger;
             this.loggerFactory = loggerFactory;
-            this.context = contexts.FirstOrDefault();
+            
             this.seeders = seedTypes;
-            EfCoreHelpers.FillSeedableQueue(context, seedableQueue);
-            EfCoreHelpers.FillCleanableEntitiesQueue(context, cleanableQueue);
+            
+            
         }
 
         public virtual async Task Clean()
         {
-            int avoidloop = cleanableQueue.Count();
-            while (cleanableQueue.Count > 0 && avoidloop > 0)
+            foreach (DbContext context in contexts)
             {
-                var entityType = cleanableQueue.Peek();
-                if ((entityType.GetNavigations().Where(a => a.IsCollection).Count() == 0) ||
-                    (entityType.GetNavigations().Where(a => a.IsCollection).Select(a => a.TargetEntityType)
-                    .All(x => !EfCoreHelpers.EntityHasData(context, x))))
+                cleanableQueue.Clear();
+                EfCoreHelpers.FillCleanableEntitiesQueue(context, cleanableQueue);
+                int avoidloop = cleanableQueue.Count();
+                while (cleanableQueue.Count > 0 && avoidloop > 0)
                 {
-                    logger?.LogInformation($"Cleaning data from entity => {entityType.ClrType.Name}");
-                    try
+                    var entityType = cleanableQueue.Peek();
+                    if ((entityType.GetNavigations().Where(a => a.IsCollection).Count() == 0) ||
+                        (entityType.GetNavigations().Where(a => a.IsCollection).Select(a => a.TargetEntityType)
+                        .All(x => !EfCoreHelpers.EntityHasData(context, x))))
                     {
-                        var recordstodelete = context.GetType().GetMethods()
-                            .Where(d => d.Name == "Set")
-                            .FirstOrDefault(d => d.IsGenericMethod)
-                            .MakeGenericMethod(entityType.ClrType).Invoke(context, null);
-                        var dbSet = recordstodelete as IQueryable<object>;
-                        context.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
-                        await context.SaveChangesAsync();
+                        logger?.LogInformation($"Cleaning data from entity => {entityType.ClrType.Name}");
+                        try
+                        {
+                            var recordstodelete = context.GetType().GetMethods()
+                                .Where(d => d.Name == "Set")
+                                .FirstOrDefault(d => d.IsGenericMethod)
+                                .MakeGenericMethod(entityType.ClrType).Invoke(context, null);
+                            var dbSet = recordstodelete as IQueryable<object>;
+                            context.RemoveRange(await dbSet.IgnoreQueryFilters().ToListAsync());
+                            await context.SaveChangesAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning($"Error on delete {Environment.NewLine}{ex.Message}");
+                            throw;
+                        }
+                        cleanableQueue.Dequeue();
+                        avoidloop = cleanableQueue.Count();
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger?.LogWarning($"Error on delete {Environment.NewLine}{ex.Message}");
+                        logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
+                        cleanableQueue.Dequeue();
+                        cleanableQueue.Enqueue(entityType);
+                        avoidloop--;
                     }
-                    cleanableQueue.Dequeue();
-                    avoidloop = cleanableQueue.Count();
-                }
-                else
-                {
-                    logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
-                    cleanableQueue.Dequeue();
-                    cleanableQueue.Enqueue(entityType);
-                    avoidloop--;
                 }
             }
         }
 
         public virtual async Task Seed()
         {
-
-            InvokeGlobalSeeds();
-
-            int avoidloop = seedableQueue.Count;
-
-            while (seedableQueue.Count > 0 && avoidloop >= 0)
+            foreach (DbContext context in contexts)
             {
-                var entityType = seedableQueue.Peek();
+                seedableQueue.Clear();
+                EfCoreHelpers.FillSeedableQueue(context, seedableQueue);
+                InvokeGlobalSeeds(context);
 
-                if ((entityType.GetForeignKeys().Count() == 0) ||
-                    (entityType.GetForeignKeys().All(x => EntityAlreadySeedOrHasData(x.PrincipalEntityType))))
+                int avoidloop = seedableQueue.Count;
+
+                while (seedableQueue.Count > 0 && avoidloop >= 0)
                 {
-                    logger?.LogInformation($"Populating entity => {entityType.ClrType.Name}");
-                    try
+                    var entityType = seedableQueue.Peek();
+
+                    if ((entityType.GetForeignKeys().Count() == 0) ||
+                        (entityType.GetForeignKeys().All(x => EntityAlreadySeedOrHasData(x.PrincipalEntityType,context))))
                     {
-                        InvokeSeed(entityType);
-                        entitiesAlreadySeeded.Add(entityType.ClrType.Name);
+                        logger?.LogInformation($"Populating entity => {entityType.ClrType.Name}");
+                        try
+                        {
+                            InvokeSeed(entityType,context);
+                            entitiesAlreadySeeded.Add(entityType.ClrType.Name);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning($"Error on populate {Environment.NewLine} {ex.Message}");
+                            throw;
+                        }
+                        seedableQueue.Dequeue();
+                        avoidloop = seedableQueue.Count();
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger?.LogWarning($"Error on populate {Environment.NewLine} {ex.Message}");
+                        logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
+                        seedableQueue.Dequeue();
+                        seedableQueue.Enqueue(entityType);
+                        avoidloop--;
                     }
-                    seedableQueue.Dequeue();
-                    avoidloop = seedableQueue.Count();
+                }
+
+                if (seedableQueue.Count() > 0)
+                {
+                    logger?.LogWarning("The entities queue is not empty. Failed to populate all entities");
                 }
                 else
                 {
-                    logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
-                    seedableQueue.Dequeue();
-                    seedableQueue.Enqueue(entityType);
-                    avoidloop--;
+                    logger?.LogInformation("Seed finalized");
                 }
-            }
-
-            if (seedableQueue.Count() > 0)
-            {
-                logger?.LogWarning("The entities queue is not empty. Failed to populate all entities");
-            }
-            else
-            {
-                logger?.LogInformation("Seed finalized");
             }
         }
 
-        private bool EntityAlreadySeedOrHasData(IEntityType entity)
+        private bool EntityAlreadySeedOrHasData(IEntityType entity,DbContext context)
         {
             if (entitiesAlreadySeeded.Contains(entity.ClrType.Name))
                 return true;

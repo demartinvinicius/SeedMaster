@@ -18,11 +18,13 @@ public partial class SeedScanner
         /// <summary>
         /// Creates an instance of an ScanResult.
         /// </summary>
-        public ScanResult(Type interfaceType, Type implementationType, SeedTypes seedType)
+        public ScanResult(Type interfaceType, Type implementationType, SeedTypes seedType, Type contextType)
         {
             InterfaceType = interfaceType;
             ImplementationType = implementationType;
             SeedType = seedType;
+            ContextType = contextType;
+            
         }
 
         /// <summary>
@@ -37,6 +39,8 @@ public partial class SeedScanner
 
 
         public SeedTypes SeedType { get; private set; }
+
+        public Type ContextType { get; private set; }
         
     }
 }

@@ -13,10 +13,14 @@ public class SeederFixture
     public Faker Faker { get; private set; }
 
     public TestContext TestContextInstance { get; private set; }
+    public AnotherTestContext AnotherTestContextInstance { get; private set; }
+    public YetAnotherContext YetAnotherContextInstance { get; private set; }
 
     public SeederFixture()
     {
         TestContextInstance = new();
+        AnotherTestContextInstance = new();
+        YetAnotherContextInstance = new();
         var target = new FileTarget()
         {
             FileName = @"C:\tmp\SeederLog.txt"
