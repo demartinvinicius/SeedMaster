@@ -218,12 +218,8 @@ namespace Test
             };
             var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
             EfCoreSeeder seeder = new EfCoreSeeder(contexts, GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
-            await seeder.Clean();
-            await _fixture.TestContextInstance.SaveChangesAsync();
-            await _fixture.AnotherTestContextInstance.SaveChangesAsync();
-            await seeder.Seed();
-            await _fixture.TestContextInstance.SaveChangesAsync();
-            await _fixture.AnotherTestContextInstance.SaveChangesAsync();
+            await seeder.Run();
+            
 
             var supplier1 = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
             var supplier2 = await _fixture.AnotherTestContextInstance.OtherSuppliers.FirstOrDefaultAsync(a => a.CNPJ == "19.138.420/0001-67");
