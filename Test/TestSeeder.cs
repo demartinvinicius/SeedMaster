@@ -37,8 +37,6 @@ namespace Test
         public void GetGlobalSeederTester()
         {
             var seeds = SeedScanner.GetSeeds(Assembly.GetExecutingAssembly());
-            //var seedtype = new ScanResult(typeof(IActualSeeder<TestContext>),typeof(GlobalSeed),ScanResult.SeedTypes.GlobalSeed,null);
-
             seeds.Should().ContainSingle(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed);
             seeds.Should().ContainSingle(x => x.ImplementationType == typeof(GlobalSeed));
             seeds.Should().ContainSingle(x => x.InterfaceType == typeof(IActualSeeder<TestContext>));
@@ -133,7 +131,7 @@ namespace Test
             {
                 _fixture.TestContextInstance
             };
-            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
+            
 
             var person = new Person
             {
@@ -149,7 +147,7 @@ namespace Test
             _fixture.TestContextInstance.Orders.Add(order);
             await _fixture.TestContextInstance.SaveChangesAsync();
 
-            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
+            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
 
             // Act
             await seeder.Clean();
@@ -166,8 +164,8 @@ namespace Test
             {
                 _fixture.TestContextInstance
             };
-            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
-            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
+            
+            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
             await seeder.Clean();
             await _fixture.TestContextInstance.SaveChangesAsync();
             await seeder.Seed();
@@ -200,8 +198,8 @@ namespace Test
                 _fixture.TestContextInstance,
                 _fixture.YetAnotherContextInstance
             };
-            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
-            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
+            
+            EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
             await seeder.Clean();
             await _fixture.TestContextInstance.SaveChangesAsync();
             await _fixture.YetAnotherContextInstance.SaveChangesAsync();
@@ -216,8 +214,8 @@ namespace Test
                 _fixture.TestContextInstance,
                 _fixture.AnotherTestContextInstance
             };
-            var logger = _fixture.LoggerF.CreateLogger<EfCoreSeeder>();
-            EfCoreSeeder seeder = new EfCoreSeeder(contexts, GetSeeds(Assembly.GetExecutingAssembly()), logger, _fixture.LoggerF);
+            
+            EfCoreSeeder seeder = new EfCoreSeeder(contexts, GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
             await seeder.Run();
             
 

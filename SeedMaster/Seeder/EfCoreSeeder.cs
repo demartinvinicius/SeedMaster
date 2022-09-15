@@ -12,7 +12,7 @@ namespace Nudes.SeedMaster.Seeder
 {
     /// <summary>
     /// EF Core Implementation of seed strategy
-    /// It should rely on DependencyInjection to acquire DbContexts and ISeeds
+    /// It should rely on DependencyInjection to acquire DbContexts and IActualSeeds
     /// </summary>
     public class EfCoreSeeder : ISeeder
     {
@@ -27,10 +27,11 @@ namespace Nudes.SeedMaster.Seeder
 
         /// <summary>
         /// Try to find a seed for a entityType and invokes it's seed method to populate the entity.
+        /// Throws an EntryPointNotFoundException if a IActualSeed is not found for the entity and context 
         /// </summary>
         /// <param name="entityType">The entity to populate</param>
-        /// <returns>true when the method is successful</returns>
-        private void InvokeSeed(IEntityType entityType, DbContext context)
+        /// 
+        private Task InvokeSeed(IEntityType entityType, DbContext context)
         {
             var seedClass = seeders
                 .Where(x => x.SeedType == ScanResult.SeedTypes.EntitySeed)
@@ -49,7 +50,13 @@ namespace Nudes.SeedMaster.Seeder
                 throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
             }
             seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
+            return Task.CompletedTask;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <exception cref="EntryPointNotFoundException"></exception>
         private void InvokeGlobalSeeds(DbContext context)
         {
             var seedClasses = seeders
@@ -72,19 +79,22 @@ namespace Nudes.SeedMaster.Seeder
             }
 
         }
-
-        public EfCoreSeeder(IEnumerable<DbContext> contexts, IEnumerable<ScanResult> seedTypes, ILogger<EfCoreSeeder> logger, ILoggerFactory loggerFactory)
+        /// <summary>
+        /// Constructor for the EfCoreSeeder. 
+        /// </summary>
+        /// <param name="contexts">The DbContexts to be seeded</param>
+        /// <param name="seedTypes">The IActualSeeds to be called during the seed process. The list of IActualSeeds can be obtained from an assembly using the SeedScanner class</param>
+        /// <param name="loggerFactory">A ILoggerFactory used to create loggers for the seeders and for this class</param>
+        public EfCoreSeeder(IEnumerable<DbContext> contexts, IEnumerable<ScanResult> seedTypes, ILoggerFactory loggerFactory)
         {
             seedableQueue = new Queue<IEntityType>();
             cleanableQueue = new Queue<IEntityType>();
             entitiesAlreadySeeded = new List<string>();
             this.contexts = contexts;
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger<EfCoreSeeder>();
             this.loggerFactory = loggerFactory;
             
             this.seeders = seedTypes;
-            
-            
         }
 
         public virtual async Task Clean()
@@ -122,7 +132,7 @@ namespace Nudes.SeedMaster.Seeder
                     }
                     else
                     {
-                        logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
+                        logger?.LogWarning($"Queuing entity => {entityType.ClrType.Name}");
                         cleanableQueue.Dequeue();
                         cleanableQueue.Enqueue(entityType);
                         avoidloop--;
@@ -151,7 +161,7 @@ namespace Nudes.SeedMaster.Seeder
                         logger?.LogInformation($"Populating entity => {entityType.ClrType.Name}");
                         try
                         {
-                            InvokeSeed(entityType,context);
+                            await InvokeSeed(entityType,context);
                             entitiesAlreadySeeded.Add(entityType.ClrType.Name);
                         }
                         catch (Exception ex)
@@ -164,7 +174,7 @@ namespace Nudes.SeedMaster.Seeder
                     }
                     else
                     {
-                        logger?.LogWarning($"Queueing entity => {entityType.ClrType.Name}");
+                        logger?.LogWarning($"Queuing entity => {entityType.ClrType.Name}");
                         seedableQueue.Dequeue();
                         seedableQueue.Enqueue(entityType);
                         avoidloop--;
@@ -195,7 +205,7 @@ namespace Nudes.SeedMaster.Seeder
 
             foreach (var db in contexts)
             {
-                logger?.LogInformation("Commiting changes to {db}", db);
+                logger?.LogInformation("Committing changes to {db}", db);
                 await db.SaveChangesAsync();
             }
 
