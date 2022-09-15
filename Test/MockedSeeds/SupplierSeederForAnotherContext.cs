@@ -2,11 +2,6 @@
 using Bogus.Extensions.Brazil;
 using Microsoft.Extensions.Logging;
 using Nudes.SeedMaster.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Test.MockedContext;
 using Test.MockedDomain;
 

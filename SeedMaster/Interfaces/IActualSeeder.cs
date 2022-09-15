@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Dynamic;
 
 namespace Nudes.SeedMaster.Interfaces;
 

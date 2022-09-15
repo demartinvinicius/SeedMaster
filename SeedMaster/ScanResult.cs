@@ -24,7 +24,6 @@ public partial class SeedScanner
             ImplementationType = implementationType;
             SeedType = seedType;
             ContextType = contextType;
-            
         }
 
         /// <summary>
@@ -37,10 +36,8 @@ public partial class SeedScanner
         /// </summary>
         public Type ImplementationType { get; private set; }
 
-
         public SeedTypes SeedType { get; private set; }
 
         public Type ContextType { get; private set; }
-        
     }
 }
