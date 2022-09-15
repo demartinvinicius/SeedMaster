@@ -17,7 +17,13 @@
     <FileVersion>0.3.0.1</FileVersion>
     <NeutralLanguage>en</NeutralLanguage>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Interfaces\BaseSeed.cs" />
+    <Compile Remove="Interfaces\ISeed.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="LICENSE.txt" />

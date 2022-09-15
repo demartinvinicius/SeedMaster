@@ -2,7 +2,6 @@ using Bogus.Extensions.Brazil;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Logging;
 using Nudes.SeedMaster;
 using Nudes.SeedMaster.Interfaces;
 using Nudes.SeedMaster.Seeder;
@@ -40,8 +39,6 @@ namespace Test
             seeds.Should().ContainSingle(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed);
             seeds.Should().ContainSingle(x => x.ImplementationType == typeof(GlobalSeed));
             seeds.Should().ContainSingle(x => x.InterfaceType == typeof(IActualSeeder<TestContext>));
-
-            
         }
 
         [Theory]
@@ -114,11 +111,11 @@ namespace Test
         [Fact]
         public async void TestEntityHasDataWithNoData()
         {
-            _fixture.TestContextInstance.OrdersItems.RemoveRange(_fixture.TestContextInstance.OrdersItems.Select(a => a));
+            _fixture.TestContextInstance.OrdersItems.RemoveRange(_fixture.TestContextInstance.OrdersItems.IgnoreQueryFilters().ToList());
             await _fixture.TestContextInstance.SaveChangesAsync();
-            _fixture.TestContextInstance.Orders.RemoveRange(_fixture.TestContextInstance.Orders.Select(a => a));
+            _fixture.TestContextInstance.Orders.RemoveRange(_fixture.TestContextInstance.Orders.IgnoreQueryFilters().ToList());
             await _fixture.TestContextInstance.SaveChangesAsync();
-            _fixture.TestContextInstance.People.RemoveRange(_fixture.TestContextInstance.People.Select(a => a));
+            _fixture.TestContextInstance.People.RemoveRange(_fixture.TestContextInstance.People.IgnoreQueryFilters().ToList());
             await _fixture.TestContextInstance.SaveChangesAsync();
 
             Assert.False(EfCoreHelpers.EntityHasData(_fixture.TestContextInstance, _fixture.TestContextInstance.People.EntityType));
@@ -131,7 +128,6 @@ namespace Test
             {
                 _fixture.TestContextInstance
             };
-            
 
             var person = new Person
             {
@@ -164,12 +160,11 @@ namespace Test
             {
                 _fixture.TestContextInstance
             };
-            
+
             EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
-            await seeder.Clean();
-            await _fixture.TestContextInstance.SaveChangesAsync();
-            await seeder.Seed();
-            await _fixture.TestContextInstance.SaveChangesAsync();
+
+            await seeder.Run();
+
             var Person = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "012.035.398-94");
             var PersonGlobal = await _fixture.TestContextInstance.People.FirstOrDefaultAsync(a => a.CPF == "026.835.079-50");
             var Supplier = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
@@ -198,7 +193,7 @@ namespace Test
                 _fixture.TestContextInstance,
                 _fixture.YetAnotherContextInstance
             };
-            
+
             EfCoreSeeder seeder = new EfCoreSeeder(contexts, SeedScanner.GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
             await seeder.Clean();
             await _fixture.TestContextInstance.SaveChangesAsync();
@@ -214,10 +209,9 @@ namespace Test
                 _fixture.TestContextInstance,
                 _fixture.AnotherTestContextInstance
             };
-            
+
             EfCoreSeeder seeder = new EfCoreSeeder(contexts, GetSeeds(Assembly.GetExecutingAssembly()), _fixture.LoggerF);
             await seeder.Run();
-            
 
             var supplier1 = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
             var supplier2 = await _fixture.AnotherTestContextInstance.OtherSuppliers.FirstOrDefaultAsync(a => a.CNPJ == "19.138.420/0001-67");

@@ -13,13 +13,13 @@ public class AnotherTestContext : DbContext
 {
     public AnotherTestContext()
     {
-
     }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseInMemoryDatabase("AnotherDatabaseForTesting");
     }
 
-    [EnableSeeder(true)]
+    [EnableSeeder]
     public DbSet<Supplier> OtherSuppliers { get; set; }
 }

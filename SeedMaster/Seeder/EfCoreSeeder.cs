@@ -23,14 +23,13 @@ namespace Nudes.SeedMaster.Seeder
         private readonly Queue<IEntityType> seedableQueue;
         private readonly Queue<IEntityType> cleanableQueue;
         private readonly List<string> entitiesAlreadySeeded;
-        
 
         /// <summary>
         /// Try to find a seed for a entityType and invokes it's seed method to populate the entity.
-        /// Throws an EntryPointNotFoundException if a IActualSeed is not found for the entity and context 
+        /// Throws an EntryPointNotFoundException if a IActualSeed is not found for the entity and context
         /// </summary>
         /// <param name="entityType">The entity to populate</param>
-        /// 
+        ///
         private Task InvokeSeed(IEntityType entityType, DbContext context)
         {
             var seedClass = seeders
@@ -52,8 +51,9 @@ namespace Nudes.SeedMaster.Seeder
             seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
             return Task.CompletedTask;
         }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="context"></param>
         /// <exception cref="EntryPointNotFoundException"></exception>
@@ -66,7 +66,7 @@ namespace Nudes.SeedMaster.Seeder
             if (seedClasses == null)
                 return;
 
-            foreach(var seedClass in seedClasses)
+            foreach (var seedClass in seedClasses)
             {
                 var seeder = Activator.CreateInstance(seedClass);
                 var loggerForSeeder = loggerFactory.CreateLogger(seedClass.Name);
@@ -75,12 +75,12 @@ namespace Nudes.SeedMaster.Seeder
                 {
                     throw new EntryPointNotFoundException($"Not found a Seed method on a GlobalSeeder");
                 }
-                method.Invoke(seeder, new object[] { context, loggerForSeeder });   
+                method.Invoke(seeder, new object[] { context, loggerForSeeder });
             }
-
         }
+
         /// <summary>
-        /// Constructor for the EfCoreSeeder. 
+        /// Constructor for the EfCoreSeeder.
         /// </summary>
         /// <param name="contexts">The DbContexts to be seeded</param>
         /// <param name="seedTypes">The IActualSeeds to be called during the seed process. The list of IActualSeeds can be obtained from an assembly using the SeedScanner class</param>
@@ -93,24 +93,34 @@ namespace Nudes.SeedMaster.Seeder
             this.contexts = contexts;
             this.logger = loggerFactory.CreateLogger<EfCoreSeeder>();
             this.loggerFactory = loggerFactory;
-            
+
             this.seeders = seedTypes;
         }
 
+        /// <summary>
+        /// This function cleans the DbContexts tables.
+        /// <para>For each DbContext it fills a queue with the tables to be cleaned. Then for each table in the queue it analyses if that table does not have a child. If so the table is clean and marked as cleaned.</para>
+        /// <para>After that it starts looking for the other tables in the queue where their child are already cleaned and cleans them.</para>
+        /// <para>The process goes on until all the tables have been cleaned.</para>
+        /// </summary>
+        /// <returns></returns>
         public virtual async Task Clean()
         {
             foreach (DbContext context in contexts)
             {
+                // Cleans and fill the tables queue
                 cleanableQueue.Clear();
                 EfCoreHelpers.FillCleanableEntitiesQueue(context, cleanableQueue);
                 int avoidloop = cleanableQueue.Count();
                 while (cleanableQueue.Count > 0 && avoidloop > 0)
                 {
                     var entityType = cleanableQueue.Peek();
+                    // Check to see if a table has no child or if all of its child don't have data.
                     if ((entityType.GetNavigations().Where(a => a.IsCollection).Count() == 0) ||
                         (entityType.GetNavigations().Where(a => a.IsCollection).Select(a => a.TargetEntityType)
                         .All(x => !EfCoreHelpers.EntityHasData(context, x))))
                     {
+                        // The table can be cleaned. So cleans it.
                         logger?.LogInformation($"Cleaning data from entity => {entityType.ClrType.Name}");
                         try
                         {
@@ -132,6 +142,7 @@ namespace Nudes.SeedMaster.Seeder
                     }
                     else
                     {
+                        // The table can't be cleaned now. Put it again on the queue.
                         logger?.LogWarning($"Queuing entity => {entityType.ClrType.Name}");
                         cleanableQueue.Dequeue();
                         cleanableQueue.Enqueue(entityType);
@@ -141,6 +152,15 @@ namespace Nudes.SeedMaster.Seeder
             }
         }
 
+        /// <summary>
+        /// This function seeds the DbContexts tables.
+        /// <para>For each DbContext it fills a queue with the tables to be seed.</para>
+        /// <para>Then it invokes the GlobalSeeders for the context</para>
+        /// <para>Then for each table in the queue it analyses if that table does not have a parent. If so the table is seed and marked as seeded.</para>
+        /// <para>After that it starts looking for the other tables in the queue where their parents are already seeded and seeds them.</para>
+        /// <para>The process goes on until all the tables have been seeded.</para>
+        /// </summary>
+        /// <returns></returns>
         public virtual async Task Seed()
         {
             foreach (DbContext context in contexts)
@@ -154,14 +174,15 @@ namespace Nudes.SeedMaster.Seeder
                 while (seedableQueue.Count > 0 && avoidloop >= 0)
                 {
                     var entityType = seedableQueue.Peek();
-
+                    // Check to see if a table has no parent or if all of its parents have data.
                     if ((entityType.GetForeignKeys().Count() == 0) ||
-                        (entityType.GetForeignKeys().All(x => EntityAlreadySeedOrHasData(x.PrincipalEntityType,context))))
+                        (entityType.GetForeignKeys().All(x => EntityAlreadySeedOrHasData(x.PrincipalEntityType, context))))
                     {
+                        // The table can be seeded. So seeds it.
                         logger?.LogInformation($"Populating entity => {entityType.ClrType.Name}");
                         try
                         {
-                            await InvokeSeed(entityType,context);
+                            await InvokeSeed(entityType, context);
                             entitiesAlreadySeeded.Add(entityType.ClrType.Name);
                         }
                         catch (Exception ex)
@@ -174,6 +195,7 @@ namespace Nudes.SeedMaster.Seeder
                     }
                     else
                     {
+                        // The table can't be seeded now. Put it again on the queue.
                         logger?.LogWarning($"Queuing entity => {entityType.ClrType.Name}");
                         seedableQueue.Dequeue();
                         seedableQueue.Enqueue(entityType);
@@ -192,7 +214,7 @@ namespace Nudes.SeedMaster.Seeder
             }
         }
 
-        private bool EntityAlreadySeedOrHasData(IEntityType entity,DbContext context)
+        private bool EntityAlreadySeedOrHasData(IEntityType entity, DbContext context)
         {
             if (entitiesAlreadySeeded.Contains(entity.ClrType.Name))
                 return true;
