@@ -23,7 +23,8 @@ public class EfCoreHelpers
     {
         IEnumerable<string> atributes = context.GetType().GetProperties().Where(x => x.GetCustomAttribute<EnableSeederAttribute>() != null &&
             (!useCleanAttribute || x.GetCustomAttribute<EnableSeederAttribute>().Clean)).Select(x => x.PropertyType.GenericTypeArguments.FirstOrDefault().Name);
-        var entities = context.Model.GetEntityTypes().Where(y => atributes.Any(x => x == y.ClrType.Name));
+
+        var entities = context.Model.GetEntityTypes().Where(y => !atributes.Any(x => x == y.ClrType.Name));
         foreach (var entity in entities)
         {
             queue.Enqueue(entity);

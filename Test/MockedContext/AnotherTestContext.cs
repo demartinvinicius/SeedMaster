@@ -15,6 +15,5 @@ public class AnotherTestContext : DbContext
         optionsBuilder.UseInMemoryDatabase("AnotherDatabaseForTesting");
     }
 
-    [EnableSeeder]
-    public DbSet<Supplier> OtherSuppliers { get; set; }
+    public DbSet<AnotherSupplier> OtherSuppliers { get; set; }
 }

@@ -17,7 +17,7 @@ public partial class SeedScanner
             .Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition);
 
         var EntitySeeds = exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
-            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,>))
+            .Where(inter => inter != null && inter.IsGenericType && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,>))
             .Select(inter =>
                    new ScanResult(inter,
                    exportedTypes.Where(implemation => inter.IsAssignableFrom(implemation)).Single(),
@@ -25,7 +25,7 @@ public partial class SeedScanner
                    inter.GenericTypeArguments.Where(x => x.BaseType == typeof(DbContext)).FirstOrDefault())).ToList();
 
         var GlobalSeeds = exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
-            .Where(inter => inter != null && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<>))
+            .Where(inter => inter != null && inter.IsGenericType && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<>))
             .Select(inter => new ScanResult(inter, exportedTypes.Where(implementation => inter.IsAssignableFrom(implementation)).Single(), ScanResult.SeedTypes.GlobalSeed,
             inter.GenericTypeArguments.Where(x => x.BaseType == typeof(DbContext)).FirstOrDefault()));
 

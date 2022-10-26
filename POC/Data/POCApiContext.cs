@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nudes.SeedMaster.Attributes;
-using Test.MockedDomain;
+using POC.Model;
 
-namespace Test.MockedContext;
+namespace POC.Context;
 
-public class TestContext : DbContext
+public class POCApiContext : DbContext
 {
-    public TestContext()
+    public POCApiContext()
     {
     }
 

@@ -215,7 +215,7 @@ namespace Test
 
             var supplier1 = await _fixture.TestContextInstance.Suppliers.FirstOrDefaultAsync(a => a.CNPJ == "47.643.916/0001-23");
             var supplier2 = await _fixture.AnotherTestContextInstance.OtherSuppliers.FirstOrDefaultAsync(a => a.CNPJ == "19.138.420/0001-67");
-
+            var list = _fixture.AnotherTestContextInstance.OtherSuppliers.ToList();
             Assert.Equal("Xavier S.A.", supplier1?.Name);
             Assert.Equal("Saraiva EIRELI", supplier2?.Name);
         }
