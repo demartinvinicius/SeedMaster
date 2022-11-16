@@ -18,7 +18,7 @@ public class OrderSeeder : IActualSeeder<Order, POCApiContext>
                 .UseSeed(1)
                 .RuleFor(o => o.OrderTime, f => f.Date.Past(2, new DateTime(1976, 04, 12)))
                 .RuleFor(o => o.Person, f => person)
-                .Generate(30);
+                .Generate(5);
             orders.AddRange(ordersgen);
         }
         context.AddRange(orders);

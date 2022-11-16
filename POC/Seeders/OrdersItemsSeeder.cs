@@ -12,8 +12,8 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, POCApiContext>
     {
         List<OrderItems> orderItems = new List<OrderItems>();
 
-        var orders = context.Orders.Local.Take(3).ToList();
-        var products = context.Products.Local.Take(4).ToList();
+        var orders = context.Orders.Local.ToList();
+        var products = context.Products.Local.Take(2).ToList();
 
         foreach (var order in orders)
         {

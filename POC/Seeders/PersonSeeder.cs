@@ -15,7 +15,7 @@ public class PersonSeeder : IActualSeeder<POC.Model.Person, POCApiContext>
             .UseSeed(1)
             .RuleFor(o => o.Name, f => f.Person.FullName)
             .RuleFor(o => o.CPF, f => f.Person.Cpf(true))
-            .Generate(30);
+            .Generate(5);
         context.AddRange(people);
     }
 }

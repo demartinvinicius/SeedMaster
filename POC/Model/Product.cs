@@ -7,4 +7,5 @@ public class Product
     public double Price { get; set; }
     public List<OrderItems> OrderItems { get; set; }
     public Supplier Supplier { get; set; }
+    public Guid SupplierId { get; set; }
 }
