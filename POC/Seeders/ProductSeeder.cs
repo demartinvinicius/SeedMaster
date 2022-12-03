@@ -19,7 +19,7 @@ public class ProductSeeder : IActualSeeder<Product, POCApiContext>
                 .UseSeed(1)
                 .RuleFor(o => o.Supplier, f => supplier)
                 .RuleFor(o => o.ProductName, f => f.Commerce.ProductName())
-                .RuleFor(o => o.Price, f => f.Random.Double(100, 200))
+                .RuleFor(o => o.Price, f => f.Random.Decimal(100, 200))
                 .Generate(3);
 
             products1.AddRange(products);

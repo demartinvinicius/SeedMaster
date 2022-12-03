@@ -58,37 +58,23 @@ public class TestSeederController : Controller
     {
         var resultList = new List<EntireOrder>();
 
-        var orders = _pocApiContext.Orders.Include(s => s.OrderItems).ToList();
-        foreach (var order in orders)
-        {
-            resultList.Add(new EntireOrder()
-            {
-                ConsumerName = _pocApiContext.People.Where(p => p.Id == order.PersonId).Select(p => p.Name).Single(),
-                OrderTime = order.OrderTime,
-                TotalPrice = order.OrderItems.Sum(o => o.Qty * _pocApiContext.Products.Where(p => p.Id == o.ProductId).Select(p => p.Price).Single()),
-                OrderItems = order.OrderItems.Select(o => new EachOrderItem()
-                {
-                    ProductName = _pocApiContext.Products.Where(p => p.Id == o.ProductId).Select(p => p.ProductName).Single(),
-                    QuantityOrdered = o.Qty,
-                    SupplierName = _pocApiContext.Suppliers.Where(s => _pocApiContext.Products.Where(p => p.Id == o.ProductId).Single().SupplierId == s.Id).Select(s => s.Name).Single(),
-                    UnitPrice = _pocApiContext.Products.Where(p => p.Id == o.ProductId).Select(p => p.Price).Single()
-                }).ToList()
-            });
-        }
-
-        //var orderx = _pocApiContext.People.Join(_pocApiContext.Orders, k => k, x => x.Person, (y, x) => new EntireOrder()
-        //{
-        //    ConsumerName = y.Name,
-        //    OrderTime = x.OrderTime,
-        //    OrderItems = x.OrderItems.Select(z => new EachOrderItem()
-        //    {
-        //        SupplierName = z.Product.Supplier.Name,
-        //        ProductName = z.Product.ProductName,
-        //        QuantityOrdered = z.Qty,
-        //        UnitPrice = z.Product.Price
-        //    }).ToList()
-        //}).ToList();
-
-        return resultList;
+        return _pocApiContext.Orders
+            .Include(s => s.Person)
+            .Include(s => s.OrderItems)
+                .ThenInclude(s => s.Product)
+                    .ThenInclude(s => s.Supplier)
+                    .Select(s => new EntireOrder()
+                    {
+                        ConsumerName = s.Person.Name,
+                        OrderTime = s.OrderTime,
+                        TotalPrice = decimal.Round(s.OrderItems.Sum(i => i.Qty * i.Product.Price), 2),
+                        OrderItems = s.OrderItems.Select(o => new EachOrderItem()
+                        {
+                            SupplierName = o.Product.Supplier.Name,
+                            ProductName = o.Product.ProductName,
+                            QuantityOrdered = o.Qty,
+                            UnitPrice = decimal.Round(o.Product.Price, 2)
+                        }).ToList()
+                    }).ToList();
     }
 }

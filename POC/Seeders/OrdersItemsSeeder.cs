@@ -13,20 +13,17 @@ public class OrdersItemsSeeder : IActualSeeder<OrderItems, POCApiContext>
         List<OrderItems> orderItems = new List<OrderItems>();
 
         var orders = context.Orders.Local.ToList();
-        var products = context.Products.Local.Take(2).ToList();
-
+        var products = context.Products.Local.ToList();
+        var faker = new Faker();
         foreach (var order in orders)
         {
-            foreach (var product in products)
-            {
-                var numitems = new Faker().Random.Int(1, 4);
-                var orderi = new Faker<OrderItems>("pt_BR")
-                    .RuleFor(o => o.Qty, f => f.Random.UInt(1, 3))
-                    .RuleFor(o => o.Order, f => order)
-                    .RuleFor(o => o.Product, f => product)
-                    .Generate(numitems);
-                orderItems.AddRange(orderi);
-            }
+            var numitems = new Faker().Random.Int(1, 4);
+            var orderi = new Faker<OrderItems>("pt_BR")
+                .RuleFor(o => o.Qty, f => f.Random.UInt(1, 3))
+                .RuleFor(o => o.Order, f => order)
+                .RuleFor(o => o.Product, f => f.PickRandom(products))
+                .Generate(numitems);
+            orderItems.AddRange(orderi);
         }
         context.AddRange(orderItems);
     }
