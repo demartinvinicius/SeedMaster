@@ -15,7 +15,7 @@ public class GlobalSeed : IActualSeeder<POCApiContext>
             .UseSeed(2)
             .RuleFor(o => o.Name, f => f.Person.FullName)
             .RuleFor(o => o.CPF, f => f.Person.Cpf(true))
-            .Generate(2);
+            .Generate(30);
         context.AddRange(people);
     }
 }

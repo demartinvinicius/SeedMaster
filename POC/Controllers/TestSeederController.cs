@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Nudes.Retornator.Core;
 using Nudes.SeedMaster.Seeder;
 using POC.Context;
-using POC.DTO;
 using POC.Model;
 
 namespace POC.Controllers;
@@ -24,9 +22,8 @@ public class TestSeederController : Controller
     [HttpPost]
     public async Task<IActionResult> SeedDataAsync()
     {
-        //await _coreSeeder.Seed();
-        //await _coreSeeder.Commit();
-        await _coreSeeder.Run();
+        await _coreSeeder.Seed();
+        await _coreSeeder.Commit();
 
         return Ok();
     }
