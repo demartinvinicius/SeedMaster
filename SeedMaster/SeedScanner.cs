@@ -3,6 +3,7 @@ using Nudes.SeedMaster.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 
 namespace Nudes.SeedMaster;
 
@@ -29,7 +30,17 @@ public partial class SeedScanner
             .Select(inter => new ScanResult(inter, exportedTypes.Where(implementation => inter.IsAssignableFrom(implementation)).Single(), ScanResult.SeedTypes.GlobalSeed,
             inter.GenericTypeArguments.Where(x => x.BaseType == typeof(DbContext)).FirstOrDefault()));
 
+        var ManytoManySeeds = exportedTypes.Select(exported => exported.GetInterfaces().FirstOrDefault())
+                            .Where(inter => inter != null && inter.IsGenericType && inter.GetGenericTypeDefinition() == typeof(IActualSeeder<,,>))
+                            .Select(inter =>
+                                    new ScanResult(inter,
+                                        exportedTypes.Where(implementation => inter.IsAssignableFrom(implementation)).Single(),
+                                        ScanResult.SeedTypes.ManyToManySeed,
+                                        inter.GenericTypeArguments.Where(x => x.BaseType == typeof(DbContext)).FirstOrDefault())).ToList();
+
         EntitySeeds.AddRange(GlobalSeeds);
+        EntitySeeds.AddRange(ManytoManySeeds);
         return EntitySeeds;
     }
+
 }

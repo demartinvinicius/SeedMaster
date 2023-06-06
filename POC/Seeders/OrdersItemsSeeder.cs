@@ -6,25 +6,27 @@ using POC.Model;
 
 namespace POC.Seeders;
 
-public class OrdersItemsSeeder : IActualSeeder<OrderItems, POCApiContext>
+public class OrdersItemsSeeder : IActualSeeder<Order, Product, POCApiContext>
 {
     public void Seed(POCApiContext context, ILogger logger)
     {
-        List<OrderItems> orderItems = new List<OrderItems>();
+        context.SaveChanges();
+        var orders = context.Orders;
+        var products = context.Products;
 
-        var orders = context.Orders.Local.ToList();
-        var products = context.Products.Local.ToList();
-        var faker = new Faker();
         foreach (var order in orders)
         {
             var numitems = new Faker().Random.Int(1, 4);
-            var orderi = new Faker<OrderItems>("pt_BR")
-                .RuleFor(o => o.Qty, f => f.Random.UInt(1, 3))
-                .RuleFor(o => o.Order, f => order)
-                .RuleFor(o => o.Product, f => f.PickRandom(products))
-                .Generate(numitems);
-            orderItems.AddRange(orderi);
+            order.Products = new Faker().PickRandom(products, numitems).ToList();
         }
-        context.AddRange(orderItems);
+
+        foreach (var product in products)
+        {
+            var numitems = new Faker().Random.Int(1, 4);
+            product.Orders = new Faker().PickRandom(orders, numitems).ToList();
+
+        }
+
+        context.SaveChanges();
     }
 }

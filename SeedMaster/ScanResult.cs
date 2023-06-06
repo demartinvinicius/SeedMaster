@@ -12,7 +12,8 @@ public partial class SeedScanner
         public enum SeedTypes
         {
             GlobalSeed,
-            EntitySeed
+            EntitySeed,
+            ManyToManySeed
         };
 
         /// <summary>

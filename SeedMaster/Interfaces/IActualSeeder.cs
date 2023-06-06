@@ -11,6 +11,11 @@ namespace Nudes.SeedMaster.Interfaces;
 /// </summary>
 /// <typeparam name="TContext">Context Type</typeparam>
 /// <typeparam name="TDbSet">DbSet Type</typeparam>
+/// 
+public interface IActualSeeder<TDbSet, TDbSet2, TContext> where TContext : DbContext
+{
+    public abstract void Seed(TContext context, ILogger logger);
+}
 public interface IActualSeeder<TDbSet, TContext> where TContext : DbContext
 {
     public abstract void Seed(TContext context, ILogger logger);
