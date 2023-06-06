@@ -39,14 +39,16 @@ namespace Nudes.SeedMaster.Seeder
 
             if (seedClass == null)
             {
-                throw new EntryPointNotFoundException($"Not found a interface seeder for the entity {entityType.Name}");
+                return Task.CompletedTask;
+                //throw new EntryPointNotFoundException($"Not found a interface seeder for the entity {entityType.Name}");
             }
             var seeder = Activator.CreateInstance(seedClass);
             var loggerForSeeder = loggerFactory.CreateLogger(seedClass.Name);
             var method = seedClass.GetMethod("Seed");
             if (method == null)
             {
-                throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
+                //throw new EntryPointNotFoundException($"Not found a Seed method on the seeder for the entity {entityType.Name}");
+                return Task.CompletedTask;
             }
             seedClass.GetMethod("Seed").Invoke(seeder, new object[] { context, loggerForSeeder });
             return Task.CompletedTask;
@@ -57,10 +59,10 @@ namespace Nudes.SeedMaster.Seeder
         /// </summary>
         /// <param name="context"></param>
         /// <exception cref="EntryPointNotFoundException"></exception>
-        private void InvokeGlobalSeeds(DbContext context)
+        private void InvokeGlobalSeeds(DbContext context, ScanResult.SeedTypes seedType)
         {
             var seedClasses = seeders
-                .Where(x => x.SeedType == ScanResult.SeedTypes.GlobalSeed &&
+                .Where(x => x.SeedType == seedType &&
                 x.ContextType == context.GetType()).Select(x => x.ImplementationType);
 
             if (seedClasses == null)
@@ -167,7 +169,7 @@ namespace Nudes.SeedMaster.Seeder
             {
                 seedableQueue.Clear();
                 EfCoreHelpers.FillSeedableQueue(context, seedableQueue);
-                InvokeGlobalSeeds(context);
+                InvokeGlobalSeeds(context, ScanResult.SeedTypes.GlobalSeed);
 
                 int avoidloop = seedableQueue.Count;
 
@@ -202,6 +204,8 @@ namespace Nudes.SeedMaster.Seeder
                         avoidloop--;
                     }
                 }
+
+                InvokeGlobalSeeds(context, ScanResult.SeedTypes.ManyToManySeed);
 
                 if (seedableQueue.Count() > 0)
                 {
